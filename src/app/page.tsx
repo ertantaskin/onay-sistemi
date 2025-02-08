@@ -5,15 +5,27 @@ import toast, { Toaster } from 'react-hot-toast';
 import axios, { AxiosError } from 'axios';
 
 interface ApiResponse {
-  status: string;
-  confirmationId?: string;
-  message?: string;
+  short_result: string;
+  result: string;
+  typeiid: string;
+  userID: string;
+  confirmationid: string;
+  have_cid: boolean;
+  professional_have_cid: boolean;
+  confirmation_id_with_dash: string;
+  confirmation_id_no_dash: string;
+  error_executing: boolean;
+  had_occurred: boolean;
 }
 
 export default function Home() {
   const [iid, setIid] = useState('');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ApiResponse | null>(null);
+  const [result, setResult] = useState<{
+    status: 'success' | 'error';
+    data?: ApiResponse;
+    message: string;
+  } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,14 +39,25 @@ export default function Home() {
     
     try {
       const response = await axios.get(`https://pidkey.com/ajax/cidms_api?iids=${iid}&justforcheck=0&apikey=Sd0zJS8vlm5VnkltMR2CqPI8n`);
+      
       if (response.data) {
-        const apiResponse: ApiResponse = {
-          status: 'success',
-          confirmationId: response.data,
-          message: 'Onay numarası başarıyla alındı!'
-        };
-        setResult(apiResponse);
-        toast.success('Onay numarası başarıyla alındı!');
+        const apiResponse = response.data as ApiResponse;
+        
+        if (apiResponse.error_executing || apiResponse.had_occurred) {
+          setResult({
+            status: 'error',
+            data: apiResponse,
+            message: apiResponse.result || 'İşlem başarısız oldu'
+          });
+          toast.error(apiResponse.result || 'İşlem başarısız oldu');
+        } else {
+          setResult({
+            status: 'success',
+            data: apiResponse,
+            message: 'Onay numarası başarıyla alındı!'
+          });
+          toast.success('Onay numarası başarıyla alındı!');
+        }
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof AxiosError 
@@ -112,11 +135,14 @@ export default function Home() {
               {result.message}
             </p>
             
-            {result.confirmationId && (
+            {result.status === 'success' && result.data && (
               <div className="mt-3 p-3 bg-white border border-green-100 rounded">
                 <p className="text-sm font-medium text-gray-600">Onay Numarası:</p>
                 <p className="mt-1 font-mono text-green-800 break-all select-all">
-                  {result.confirmationId}
+                  {result.data.confirmation_id_with_dash}
+                </p>
+                <p className="mt-2 text-xs text-gray-500">
+                  Çizgisiz Format: <span className="font-mono">{result.data.confirmation_id_no_dash}</span>
                 </p>
               </div>
             )}
