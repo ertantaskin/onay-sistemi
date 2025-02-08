@@ -14,28 +14,36 @@ import {
   QuestionMarkCircleIcon,
   SunIcon,
   MoonIcon,
+  UserIcon,
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
 
 const products = [
-  { name: 'Kredi Yükle', description: 'Bakiye yükleyerek hemen işlem yapın', href: '#', icon: CreditCardIcon },
-  { name: 'Kredi Geçmişi', description: 'Geçmiş işlemlerinizi görüntüleyin', href: '#', icon: ClockIcon },
-  { name: 'Kupon Kodları', description: 'Promosyon kodlarını kullanın', href: '#', icon: KeyIcon },
-]
+  { name: 'Kredi Yükle', description: 'Bakiye yükleyerek hemen işlem yapın', href: '/credits', icon: CreditCardIcon },
+  { name: 'Kredi Geçmişi', description: 'Geçmiş işlemlerinizi görüntüleyin', href: '/credits/history', icon: ClockIcon },
+  { name: 'Kupon Kodları', description: 'Promosyon kodlarını kullanın', href: '/credits/coupons', icon: KeyIcon },
+];
 
 const callsToAction = [
-  { name: 'Destek Al', href: '#', icon: QuestionMarkCircleIcon },
-  { name: 'Güvenlik', href: '#', icon: ShieldCheckIcon },
-]
+  { name: 'Destek Al', href: '/support', icon: QuestionMarkCircleIcon },
+  { name: 'Güvenlik', href: '/security', icon: ShieldCheckIcon },
+];
 
 function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
+  return classes.filter(Boolean).join(' ');
 }
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: session } = useSession();
+
+  const handleSignOut = () => {
+    signOut({ callbackUrl: '/' });
+  };
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 ${theme === 'dark' ? 'bg-gray-800/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm'} shadow-lg`}>
@@ -62,60 +70,62 @@ export function Header() {
           <Link href="/" className="text-sm font-semibold leading-6">
             Ana Sayfa
           </Link>
-          <Popover className="relative">
-            <Popover.Button className="flex items-center gap-x-1 text-sm font-semibold leading-6">
-              Kredi İşlemleri
-              <ChevronDownIcon className="h-5 w-5 flex-none" aria-hidden="true" />
-            </Popover.Button>
+          {session && (
+            <Popover className="relative">
+              <Popover.Button className="flex items-center gap-x-1 text-sm font-semibold leading-6">
+                Kredi İşlemleri
+                <ChevronDownIcon className="h-5 w-5 flex-none" aria-hidden="true" />
+              </Popover.Button>
 
-            <Transition
-              as={Fragment}
-              enter="transition ease-out duration-200"
-              enterFrom="opacity-0 translate-y-1"
-              enterTo="opacity-100 translate-y-0"
-              leave="transition ease-in duration-150"
-              leaveFrom="opacity-100 translate-y-0"
-              leaveTo="opacity-0 translate-y-1"
-            >
-              <Popover.Panel className={`absolute -left-8 top-full z-10 mt-3 w-screen max-w-md overflow-hidden rounded-3xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg ring-1 ring-gray-900/5`}>
-                <div className="p-4">
-                  {products.map((item) => (
-                    <div
-                      key={item.name}
-                      className={`group relative flex items-center gap-x-6 rounded-lg p-4 text-sm leading-6 hover:bg-gray-100 ${
-                        theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20">
-                        <item.icon className="h-6 w-6 text-blue-500 group-hover:text-blue-600" aria-hidden="true" />
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-200"
+                enterFrom="opacity-0 translate-y-1"
+                enterTo="opacity-100 translate-y-0"
+                leave="transition ease-in duration-150"
+                leaveFrom="opacity-100 translate-y-0"
+                leaveTo="opacity-0 translate-y-1"
+              >
+                <Popover.Panel className={`absolute -left-8 top-full z-10 mt-3 w-screen max-w-md overflow-hidden rounded-3xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg ring-1 ring-gray-900/5`}>
+                  <div className="p-4">
+                    {products.map((item) => (
+                      <div
+                        key={item.name}
+                        className={`group relative flex items-center gap-x-6 rounded-lg p-4 text-sm leading-6 hover:bg-gray-100 ${
+                          theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex h-11 w-11 flex-none items-center justify-center rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20">
+                          <item.icon className="h-6 w-6 text-blue-500 group-hover:text-blue-600" aria-hidden="true" />
+                        </div>
+                        <div className="flex-auto">
+                          <Link href={item.href} className="block font-semibold">
+                            {item.name}
+                            <span className="absolute inset-0" />
+                          </Link>
+                          <p className={`mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{item.description}</p>
+                        </div>
                       </div>
-                      <div className="flex-auto">
-                        <Link href={item.href} className="block font-semibold">
-                          {item.name}
-                          <span className="absolute inset-0" />
-                        </Link>
-                        <p className={`mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{item.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className={`grid grid-cols-2 divide-x divide-gray-900/5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                  {callsToAction.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={`flex items-center justify-center gap-x-2.5 p-3 text-sm font-semibold leading-6 ${
-                        theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      <item.icon className="h-5 w-5 flex-none text-blue-500" aria-hidden="true" />
-                      {item.name}
-                    </Link>
-                  ))}
-                </div>
-              </Popover.Panel>
-            </Transition>
-          </Popover>
+                    ))}
+                  </div>
+                  <div className={`grid grid-cols-2 divide-x divide-gray-900/5 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                    {callsToAction.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`flex items-center justify-center gap-x-2.5 p-3 text-sm font-semibold leading-6 ${
+                          theme === 'dark' ? 'hover:bg-gray-600' : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <item.icon className="h-5 w-5 flex-none text-blue-500" aria-hidden="true" />
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                </Popover.Panel>
+              </Transition>
+            </Popover>
+          )}
 
           <Link href="/about" className="text-sm font-semibold leading-6">
             Hakkında
@@ -140,10 +150,35 @@ export function Header() {
               <MoonIcon className="h-5 w-5" />
             )}
           </button>
-          <button className="flex items-center gap-x-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500">
-            <UserPlusIcon className="h-5 w-5" />
-            Giriş Yap
-          </button>
+          {session ? (
+            <div className="flex items-center gap-x-4">
+              <span className="text-sm font-medium">{session.user?.email}</span>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-x-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                Çıkış Yap
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-x-4">
+              <Link
+                href="/auth/login"
+                className="flex items-center gap-x-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+              >
+                <UserIcon className="h-5 w-5" />
+                Giriş Yap
+              </Link>
+              <Link
+                href="/auth/register"
+                className="flex items-center gap-x-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-500"
+              >
+                <UserPlusIcon className="h-5 w-5" />
+                Kayıt Ol
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
       <Dialog as="div" className="lg:hidden" open={mobileMenuOpen} onClose={setMobileMenuOpen}>
@@ -176,38 +211,40 @@ export function Header() {
                 >
                   Ana Sayfa
                 </Link>
-                <Disclosure as="div" className="-mx-3">
-                  {({ open }) => (
-                    <>
-                      <Disclosure.Button className={`flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-base font-semibold leading-7 ${
-                        theme === 'dark' ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
-                      }`}>
-                        Kredi İşlemleri
-                        <ChevronDownIcon
-                          className={classNames(open ? 'rotate-180' : '', 'h-5 w-5 flex-none')}
-                          aria-hidden="true"
-                        />
-                      </Disclosure.Button>
-                      <Disclosure.Panel className="mt-2 space-y-2">
-                        {[...products, ...callsToAction].map((item) => (
-                          <Disclosure.Button
-                            key={item.name}
-                            as="a"
-                            href={item.href}
-                            className={`block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold leading-7 ${
-                              theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            <div className="flex items-center gap-x-3">
-                              <item.icon className="h-5 w-5 text-blue-500" />
-                              {item.name}
-                            </div>
-                          </Disclosure.Button>
-                        ))}
-                      </Disclosure.Panel>
-                    </>
-                  )}
-                </Disclosure>
+                {session && (
+                  <Disclosure as="div" className="-mx-3">
+                    {({ open }) => (
+                      <>
+                        <Disclosure.Button className={`flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-base font-semibold leading-7 ${
+                          theme === 'dark' ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                        }`}>
+                          Kredi İşlemleri
+                          <ChevronDownIcon
+                            className={classNames(open ? 'rotate-180' : '', 'h-5 w-5 flex-none')}
+                            aria-hidden="true"
+                          />
+                        </Disclosure.Button>
+                        <Disclosure.Panel className="mt-2 space-y-2">
+                          {[...products, ...callsToAction].map((item) => (
+                            <Disclosure.Button
+                              key={item.name}
+                              as="a"
+                              href={item.href}
+                              className={`block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold leading-7 ${
+                                theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-x-3">
+                                <item.icon className="h-5 w-5 text-blue-500" />
+                                {item.name}
+                              </div>
+                            </Disclosure.Button>
+                          ))}
+                        </Disclosure.Panel>
+                      </>
+                    )}
+                  </Disclosure>
+                )}
                 <Link
                   href="/about"
                   className={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 ${
@@ -246,10 +283,35 @@ export function Header() {
                     </>
                   )}
                 </button>
-                <button className="w-full flex items-center justify-center gap-x-2.5 rounded-lg bg-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-600 transition-all duration-200">
-                  <UserPlusIcon className="h-5 w-5" />
-                  Giriş Yap
-                </button>
+                {session ? (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-center mb-2">{session.user?.email}</div>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center justify-center gap-x-2.5 rounded-lg bg-red-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-600 transition-all duration-200"
+                    >
+                      <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                      Çıkış Yap
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Link
+                      href="/auth/login"
+                      className="w-full flex items-center justify-center gap-x-2.5 rounded-lg bg-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-600 transition-all duration-200"
+                    >
+                      <UserIcon className="h-5 w-5" />
+                      Giriş Yap
+                    </Link>
+                    <Link
+                      href="/auth/register"
+                      className="w-full flex items-center justify-center gap-x-2.5 rounded-lg bg-green-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-600 transition-all duration-200"
+                    >
+                      <UserPlusIcon className="h-5 w-5" />
+                      Kayıt Ol
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>
