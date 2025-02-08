@@ -85,30 +85,40 @@ export function IIDForm() {
   };
 
   return (
-    <div className={`max-w-md mx-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-xl p-6`}>
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl p-8 backdrop-blur-sm`}>
+      <form onSubmit={handleSubmit} className="space-y-8">
         <div>
-          <label htmlFor="iid" className="block text-sm font-medium mb-2">
+          <label htmlFor="iid" className="block text-lg font-medium mb-3">
             IID (Yükleme Kimliği)
           </label>
-          <input
-            type="text"
-            id="iid"
-            value={iid}
-            onChange={(e) => setIid(e.target.value)}
-            className={`w-full px-4 py-2 rounded-lg border ${
-              theme === 'dark' 
-                ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' 
-                : 'bg-white border-gray-300 focus:border-blue-500'
-            } focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors`}
-            placeholder="IID numaranızı giriniz"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              id="iid"
+              value={iid}
+              onChange={(e) => setIid(e.target.value)}
+              className={`w-full px-5 py-4 rounded-xl border text-lg ${
+                theme === 'dark' 
+                  ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' 
+                  : 'bg-white border-gray-300 focus:border-blue-500'
+              } focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200`}
+              placeholder="IID numaranızı giriniz"
+            />
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            IID numaranızı Microsoft ürününüzün kurulum ekranında bulabilirsiniz.
+          </p>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 ${
+          className={`w-full py-4 px-6 rounded-xl font-medium text-lg transition-all duration-200 ${
             loading 
               ? 'opacity-50 cursor-not-allowed' 
               : 'hover:bg-blue-600 hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
@@ -129,51 +139,58 @@ export function IIDForm() {
       </form>
 
       {result && (
-        <div className={`mt-6 p-4 rounded-lg ${
+        <div className={`mt-8 p-6 rounded-xl ${
           result.status === 'success'
             ? theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-50 text-green-800'
             : theme === 'dark' ? 'bg-red-900/30 text-red-300' : 'bg-red-50 text-red-800'
         }`}>
-          <div className="flex items-center mb-2">
+          <div className="flex items-center mb-4">
             {result.status === 'success' ? (
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
             ) : (
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             )}
-            <h3 className="font-medium">
+            <h3 className="text-lg font-medium">
               {result.status === 'success' ? 'İşlem Başarılı' : 'İşlem Başarısız'}
             </h3>
           </div>
           
-          <p className="text-sm">{result.message}</p>
+          <p className="text-base mb-4">{result.message}</p>
           
           {result.status === 'success' && result.data?.confirmation_id_with_dash && (
-            <div className={`mt-3 p-3 rounded ${
+            <div className={`p-4 rounded-xl ${
               theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-            } border border-opacity-10`}>
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium mb-1">Onay Numarası:</p>
-                  <p className="font-mono text-sm break-all">
+            } border border-opacity-10 shadow-sm`}>
+              <div className="flex justify-between items-center">
+                <div className="space-y-2">
+                  <p className="text-base font-medium">Onay Numarası:</p>
+                  <p className="font-mono text-lg break-all">
                     {result.data.confirmation_id_with_dash}
                   </p>
                 </div>
                 <button
                   onClick={() => result.data && handleCopy(result.data.confirmation_id_with_dash)}
-                  className={`p-2 rounded hover:bg-opacity-80 transition-colors ${
-                    theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                  className={`p-3 rounded-lg hover:bg-opacity-80 transition-colors ${
+                    theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                   title="Kopyala"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                   </svg>
                 </button>
               </div>
+              {result.data.typeiid && (
+                <div className="mt-4 pt-4 border-t border-current border-opacity-10">
+                  <p className="text-sm opacity-75">
+                    Ürün Tipi: {result.data.typeiid}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
