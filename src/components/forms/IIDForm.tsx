@@ -79,7 +79,7 @@ export function IIDForm() {
     try {
       await navigator.clipboard.writeText(text);
       toast.success('Onay numarası kopyalandı!');
-    } catch (err) {
+    } catch {
       toast.error('Kopyalama başarısız oldu');
     }
   };
