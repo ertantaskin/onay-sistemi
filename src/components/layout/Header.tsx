@@ -1,8 +1,8 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, Suspense } from 'react';
 import { useTheme } from '@/app/ThemeContext';
-import { Popover, Transition } from '@headlessui/react';
+import dynamic from 'next/dynamic';
 import {
   Bars3Icon,
   XMarkIcon,
@@ -20,6 +20,31 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
+
+const PopoverRoot = dynamic(
+  () => import('@headlessui/react').then((mod) => mod.Popover),
+  { ssr: false }
+);
+
+const PopoverButton = dynamic(
+  () => import('@headlessui/react').then((mod) => mod.Popover.Button),
+  { ssr: false }
+);
+
+const PopoverPanel = dynamic(
+  () => import('@headlessui/react').then((mod) => mod.Popover.Panel),
+  { ssr: false }
+);
+
+const PopoverGroup = dynamic(
+  () => import('@headlessui/react').then((mod) => mod.Popover.Group),
+  { ssr: false }
+);
+
+const Transition = dynamic(
+  () => import('@headlessui/react').then((mod) => mod.Transition),
+  { ssr: false }
+);
 
 const products = [
   {
@@ -67,23 +92,23 @@ export function Header() {
         </div>
 
         <div className="flex lg:hidden">
-          <Popover.Button className={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+          <PopoverButton className={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
             <span className="sr-only">Menüyü aç</span>
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
-          </Popover.Button>
+          </PopoverButton>
         </div>
 
-        <Popover.Group className="hidden lg:flex lg:gap-x-12">
+        <PopoverGroup className="hidden lg:flex lg:gap-x-12">
           <Link href="/" className={`text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
             Ana Sayfa
           </Link>
 
           {session && (
-            <Popover className="relative">
-              <Popover.Button className={`flex items-center gap-x-1 text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
+            <PopoverRoot>
+              <PopoverButton className={`flex items-center gap-x-1 text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
                 Kredi İşlemleri
                 <CurrencyDollarIcon className="h-5 w-5" aria-hidden="true" />
-              </Popover.Button>
+              </PopoverButton>
 
               <Transition
                 as={Fragment}
@@ -94,7 +119,7 @@ export function Header() {
                 leaveFrom="opacity-100 translate-y-0"
                 leaveTo="opacity-0 translate-y-1"
               >
-                <Popover.Panel className={`absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 transform px-2 sm:px-0 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                <PopoverPanel className={`absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 transform px-2 sm:px-0 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                   <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
                     <div className="relative grid gap-6 px-5 py-6 sm:gap-8 sm:p-8">
                       {products.map((item) => (
@@ -120,15 +145,15 @@ export function Header() {
                       ))}
                     </div>
                   </div>
-                </Popover.Panel>
+                </PopoverPanel>
               </Transition>
-            </Popover>
+            </PopoverRoot>
           )}
 
           <Link href="/about" className={`text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
             Hakkında
           </Link>
-        </Popover.Group>
+        </PopoverGroup>
 
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
           <button
@@ -191,7 +216,7 @@ export function Header() {
         leaveFrom="opacity-100 scale-100"
         leaveTo="opacity-0 scale-95"
       >
-        <Popover.Panel focus className={`absolute inset-x-0 top-0 origin-top-right transform p-2 transition md:hidden ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+        <PopoverPanel focus className={`absolute inset-x-0 top-0 origin-top-right transform p-2 transition md:hidden ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
           <div className={`rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="px-5 pt-4 pb-6">
               <div className="flex items-center justify-between">
@@ -205,10 +230,10 @@ export function Header() {
                   />
                 </div>
                 <div className="-mr-2">
-                  <Popover.Button className={`inline-flex items-center justify-center rounded-md p-2 ${theme === 'dark' ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-500' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-500'}`}>
+                  <PopoverButton className={`inline-flex items-center justify-center rounded-md p-2 ${theme === 'dark' ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-500' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-500'}`}>
                     <span className="sr-only">Menüyü kapat</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                  </Popover.Button>
+                  </PopoverButton>
                 </div>
               </div>
               <div className="mt-6">
@@ -292,7 +317,7 @@ export function Header() {
               </div>
             </div>
           </div>
-        </Popover.Panel>
+        </PopoverPanel>
       </Transition>
     </header>
   );
