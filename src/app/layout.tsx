@@ -1,15 +1,11 @@
-import type { Metadata } from "next";
+'use client';
+
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./ThemeContext";
 import { SessionProvider } from "next-auth/react";
 
 const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Microsoft Onay Sistemi",
-  description: "Microsoft ürünleri için onay numarası alma sistemi",
-};
 
 export default function RootLayout({
   children,
