@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 export default function Home() {
   const [iid, setIid] = useState('');
@@ -22,8 +22,11 @@ export default function Home() {
         toast.success('Onay numarası başarıyla alındı!');
         // Burada response.data ile gelen onay numarasını işleyebilirsiniz
       }
-    } catch (error) {
-      toast.error('Bir hata oluştu. Lütfen tekrar deneyin.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof AxiosError 
+        ? error.response?.data?.message || 'API yanıt hatası'
+        : 'Bir hata oluştu';
+      toast.error(`İşlem başarısız: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
