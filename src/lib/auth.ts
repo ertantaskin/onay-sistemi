@@ -64,6 +64,13 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Giriş sonrası dashboard'a yönlendir
+      if (url.startsWith(baseUrl)) {
+        return `${baseUrl}/dashboard`;
+      }
+      return url;
     }
   },
   pages: {
@@ -75,4 +82,9 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 gün
   },
   secret: process.env.NEXTAUTH_SECRET,
+  events: {
+    async signIn({ user }) {
+      // Başarılı giriş sonrası yapılacak işlemler
+    },
+  },
 }; 
