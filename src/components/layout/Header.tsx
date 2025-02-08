@@ -2,7 +2,7 @@
 
 import { Fragment } from 'react';
 import { useTheme } from '@/app/ThemeContext';
-import dynamic from 'next/dynamic';
+import { Popover, Transition } from '@headlessui/react';
 import {
   Bars3Icon,
   XMarkIcon,
@@ -20,16 +20,6 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
-
-const Popover = dynamic(
-  () => import('@headlessui/react').then((mod) => mod.Popover),
-  { ssr: false }
-);
-
-const Transition = dynamic(
-  () => import('@headlessui/react').then((mod) => mod.Transition),
-  { ssr: false }
-);
 
 const products = [
   {
