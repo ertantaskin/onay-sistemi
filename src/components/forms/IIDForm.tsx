@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import axios, { AxiosError } from 'axios';
 import { useTheme } from '@/app/ThemeContext';
@@ -21,7 +21,8 @@ interface ApiResponse {
 
 export function IIDForm() {
   const { theme } = useTheme();
-  const [iid, setIid] = useState('');
+  const [iidParts, setIidParts] = useState<string[]>(Array(9).fill(''));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
     status: 'success' | 'error';
@@ -29,10 +30,49 @@ export function IIDForm() {
     message: string;
   } | null>(null);
 
+  useEffect(() => {
+    inputRefs.current = inputRefs.current.slice(0, 9);
+  }, []);
+
+  const handleInputChange = (index: number, value: string) => {
+    const newValue = value.replace(/[^0-9]/g, '').slice(0, 7);
+    const newParts = [...iidParts];
+    newParts[index] = newValue;
+    setIidParts(newParts);
+
+    if (newValue.length === 7 && index < 8) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+    const parts: string[] = [];
+    
+    for (let i = 0; i < 9; i++) {
+      parts.push(pastedText.slice(i * 7, (i + 1) * 7));
+    }
+    
+    setIidParts(parts);
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !iidParts[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 8) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!iid) {
-      toast.error('Lütfen IID giriniz');
+    const fullIID = iidParts.join('');
+
+    if (fullIID.length !== 63) {
+      toast.error('Lütfen tüm IID alanlarını doldurun');
       return;
     }
 
@@ -40,18 +80,18 @@ export function IIDForm() {
     setResult(null);
     
     try {
-      const response = await axios.get(`https://pidkey.com/ajax/cidms_api?iids=${iid}&justforcheck=0&apikey=Sd0zJS8vlm5VnkltMR2CqPI8n`);
+      const response = await axios.get(`https://pidkey.com/ajax/cidms_api?iids=${fullIID}&justforcheck=0&apikey=Sd0zJS8vlm5VnkltMR2CqPI8n`);
       
       if (response.data) {
         const apiResponse = response.data as ApiResponse;
         
-        if (apiResponse.error_executing || apiResponse.had_occurred) {
+        if (apiResponse.error_executing || apiResponse.had_occurred || !apiResponse.confirmation_id_with_dash) {
           setResult({
             status: 'error',
             data: apiResponse,
-            message: apiResponse.result || 'İşlem başarısız oldu'
+            message: apiResponse.result || 'Geçersiz IID numarası'
           });
-          toast.error(apiResponse.result || 'İşlem başarısız oldu');
+          toast.error(apiResponse.result || 'Geçersiz IID numarası');
         } else {
           setResult({
             status: 'success',
@@ -88,30 +128,41 @@ export function IIDForm() {
     <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl p-8 backdrop-blur-sm`}>
       <form onSubmit={handleSubmit} className="space-y-8">
         <div>
-          <label htmlFor="iid" className="block text-lg font-medium mb-3">
+          <label htmlFor="iid-0" className="block text-lg font-medium mb-3">
             IID (Yükleme Kimliği)
           </label>
-          <div className="relative">
-            <input
-              type="text"
-              id="iid"
-              value={iid}
-              onChange={(e) => setIid(e.target.value)}
-              className={`w-full px-5 py-4 rounded-xl border text-lg ${
-                theme === 'dark' 
-                  ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' 
-                  : 'bg-white border-gray-300 focus:border-blue-500'
-              } focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200`}
-              placeholder="IID numaranızı giriniz"
-            />
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
+          <div className="grid grid-cols-3 md:grid-cols-9 gap-2">
+            {iidParts.map((part, index) => (
+              <div key={index} className="relative">
+                <input
+                  ref={(el) => {
+                    inputRefs.current[index] = el;
+                  }}
+                  type="text"
+                  id={`iid-${index}`}
+                  value={part}
+                  onChange={(e) => handleInputChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  onPaste={handlePaste}
+                  className={`w-full px-2 py-3 text-center rounded-lg border text-lg font-mono ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' 
+                      : 'bg-white border-gray-300 focus:border-blue-500'
+                  } focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200`}
+                  placeholder="0000000"
+                  maxLength={7}
+                  inputMode="numeric"
+                />
+                {index < 8 && (
+                  <span className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 text-gray-400 font-mono">
+                    -
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            IID numaranızı Microsoft ürününüzün kurulum ekranında bulabilirsiniz.
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            IID numaranızı Microsoft ürününüzün kurulum ekranında bulabilirsiniz. Her kutu 7 rakam içermelidir.
           </p>
         </div>
 
