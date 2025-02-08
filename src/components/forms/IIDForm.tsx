@@ -131,9 +131,9 @@ export function IIDForm() {
           <label htmlFor="iid-0" className="block text-lg font-medium mb-3">
             IID (Yükleme Kimliği)
           </label>
-          <div className="grid grid-cols-3 md:grid-cols-9 gap-2">
+          <div className="grid grid-cols-3 gap-4 md:gap-6">
             {iidParts.map((part, index) => (
-              <div key={index} className="relative">
+              <div key={index} className="relative group">
                 <input
                   ref={(el) => {
                     inputRefs.current[index] = el;
@@ -144,43 +144,45 @@ export function IIDForm() {
                   onChange={(e) => handleInputChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className={`w-full px-2 py-3 text-center rounded-lg border text-lg font-mono ${
+                  className={`w-full h-14 px-3 text-center rounded-xl border-2 text-base font-mono tracking-wider ${
                     theme === 'dark' 
                       ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' 
                       : 'bg-white border-gray-300 focus:border-blue-500'
-                  } focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200`}
+                  } focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 group-hover:border-blue-400`}
                   placeholder="0000000"
                   maxLength={7}
                   inputMode="numeric"
                 />
-                {index < 8 && (
-                  <span className="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 text-gray-400 font-mono">
-                    -
-                  </span>
-                )}
+                <div className={`absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full transition-all duration-200 ${
+                  part.length === 7
+                    ? 'bg-green-500'
+                    : part.length > 0
+                    ? 'bg-yellow-500'
+                    : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
+                }`} />
               </div>
             ))}
           </div>
-          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-            IID numaranızı Microsoft ürününüzün kurulum ekranında bulabilirsiniz. Her kutu 7 rakam içermelidir.
-          </p>
+          <div className="mt-4 flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p>Her kutu 7 rakam içermelidir. Yapıştır (Ctrl+V) ile otomatik doldurabilirsiniz.</p>
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-4 px-6 rounded-xl font-medium text-lg transition-all duration-200 ${
+          className={`w-full h-14 rounded-xl font-medium text-lg transition-all duration-300 ${
             loading 
               ? 'opacity-50 cursor-not-allowed' 
-              : 'hover:bg-blue-600 hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
+              : 'hover:bg-blue-600 hover:shadow-lg hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
           } bg-blue-500 text-white`}
         >
           {loading ? (
             <div className="flex items-center justify-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+              <div className="animate-spin w-6 h-6 border-3 border-white border-t-transparent rounded-full mr-3" />
               İşleniyor...
             </div>
           ) : (
@@ -190,58 +192,74 @@ export function IIDForm() {
       </form>
 
       {result && (
-        <div className={`mt-8 p-6 rounded-xl ${
+        <div className={`mt-8 overflow-hidden ${
           result.status === 'success'
-            ? theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-50 text-green-800'
-            : theme === 'dark' ? 'bg-red-900/30 text-red-300' : 'bg-red-50 text-red-800'
-        }`}>
-          <div className="flex items-center mb-4">
-            {result.status === 'success' ? (
-              <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            )}
-            <h3 className="text-lg font-medium">
-              {result.status === 'success' ? 'İşlem Başarılı' : 'İşlem Başarısız'}
-            </h3>
+            ? theme === 'dark' ? 'bg-green-900/20' : 'bg-green-50'
+            : theme === 'dark' ? 'bg-red-900/20' : 'bg-red-50'
+        } rounded-xl`}>
+          <div className={`p-4 ${
+            result.status === 'success'
+              ? theme === 'dark' ? 'bg-green-500/10' : 'bg-green-100/50'
+              : theme === 'dark' ? 'bg-red-500/10' : 'bg-red-100/50'
+          }`}>
+            <div className="flex items-center">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                result.status === 'success'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-red-500 text-white'
+              }`}>
+                {result.status === 'success' ? (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold">
+                  {result.status === 'success' ? 'İşlem Başarılı' : 'İşlem Başarısız'}
+                </h3>
+                <p className={`text-sm ${
+                  result.status === 'success'
+                    ? theme === 'dark' ? 'text-green-300' : 'text-green-600'
+                    : theme === 'dark' ? 'text-red-300' : 'text-red-600'
+                }`}>
+                  {result.message}
+                </p>
+              </div>
+            </div>
           </div>
           
-          <p className="text-base mb-4">{result.message}</p>
-          
           {result.status === 'success' && result.data?.confirmation_id_with_dash && (
-            <div className={`p-4 rounded-xl ${
-              theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-            } border border-opacity-10 shadow-sm`}>
-              <div className="flex justify-between items-center">
-                <div className="space-y-2">
-                  <p className="text-base font-medium">Onay Numarası:</p>
-                  <p className="font-mono text-lg break-all">
-                    {result.data.confirmation_id_with_dash}
-                  </p>
+            <div className="p-6">
+              <div className={`p-4 rounded-lg ${
+                theme === 'dark' ? 'bg-gray-700/50' : 'bg-white'
+              } border border-opacity-10 shadow-sm`}>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-medium opacity-75 mb-1">Onay Numarası</p>
+                    <p className="font-mono text-lg tracking-wide">
+                      {result.data.confirmation_id_with_dash}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => result.data && handleCopy(result.data.confirmation_id_with_dash)}
+                    className={`p-3 rounded-lg hover:bg-opacity-80 transition-all duration-200 ${
+                      theme === 'dark' 
+                        ? 'bg-gray-600 hover:bg-gray-500' 
+                        : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                    title="Kopyala"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  onClick={() => result.data && handleCopy(result.data.confirmation_id_with_dash)}
-                  className={`p-3 rounded-lg hover:bg-opacity-80 transition-colors ${
-                    theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                  title="Kopyala"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                  </svg>
-                </button>
               </div>
-              {result.data.typeiid && (
-                <div className="mt-4 pt-4 border-t border-current border-opacity-10">
-                  <p className="text-sm opacity-75">
-                    Ürün Tipi: {result.data.typeiid}
-                  </p>
-                </div>
-              )}
             </div>
           )}
         </div>
