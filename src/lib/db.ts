@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 declare global {
-  let mongoose: {
+  var mongoose: {
     conn: typeof mongoose | null;
     promise: Promise<typeof mongoose> | null;
   };
@@ -19,7 +19,7 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
-async function dbConnect() {
+export async function connectToDatabase() {
   if (cached.conn) {
     return cached.conn;
   }
@@ -42,6 +42,4 @@ async function dbConnect() {
   }
 
   return cached.conn;
-}
-
-export default dbConnect; 
+} 

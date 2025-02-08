@@ -1,7 +1,17 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-const userSchema = new mongoose.Schema({
+export interface IUser {
+  email: string;
+  password: string;
+  name: string;
+  credit: number;
+  role: 'user' | 'admin';
+  isActive: boolean;
+  lastLogin: Date;
+}
+
+const userSchema = new mongoose.Schema<IUser>({
   email: {
     type: String,
     required: [true, 'Email gereklidir'],
@@ -64,6 +74,4 @@ userSchema.methods.comparePassword = async function(candidatePassword: string) {
   }
 };
 
-const User = mongoose.models.User || mongoose.model('User', userSchema);
-
-export default User; 
+export const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema); 
