@@ -151,7 +151,7 @@ export function IIDForm() {
           
           <p className="text-sm">{result.message}</p>
           
-          {result.status === 'success' && result.data && (
+          {result.status === 'success' && result.data?.confirmation_id_with_dash && (
             <div className={`mt-3 p-3 rounded ${
               theme === 'dark' ? 'bg-gray-800' : 'bg-white'
             } border border-opacity-10`}>
@@ -163,7 +163,7 @@ export function IIDForm() {
                   </p>
                 </div>
                 <button
-                  onClick={() => handleCopy(result.data.confirmation_id_with_dash)}
+                  onClick={() => result.data && handleCopy(result.data.confirmation_id_with_dash)}
                   className={`p-2 rounded hover:bg-opacity-80 transition-colors ${
                     theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
                   }`}
