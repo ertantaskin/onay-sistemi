@@ -126,7 +126,7 @@ export function IIDForm() {
 
   return (
     <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-2xl p-8 backdrop-blur-sm`}>
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-8" autoComplete="off" noValidate>
         <div>
           <label htmlFor="iid-0" className="block text-lg font-medium mb-3">
             IID (Yükleme Kimliği)
@@ -144,6 +144,7 @@ export function IIDForm() {
                   onChange={(e) => handleInputChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
+                  autoComplete="off"
                   className={`w-full h-14 px-3 text-center rounded-xl border-2 text-base font-mono tracking-wider ${
                     theme === 'dark' 
                       ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' 
