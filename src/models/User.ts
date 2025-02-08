@@ -61,15 +61,18 @@ userSchema.pre('save', async function(next) {
     next();
   } catch (error) {
     console.error('Şifre hashleme hatası:', error);
-    next(error);
+    next(error as Error);
   }
 });
 
 // Şifre karşılaştırma metodu
-userSchema.methods.comparePassword = async function(candidatePassword: string) {
+userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   try {
-    return await bcrypt.compare(candidatePassword, this.password);
+    const user = await User.findById(this._id).select('+password');
+    if (!user?.password) return false;
+    return await bcrypt.compare(candidatePassword, user.password);
   } catch (error) {
+    console.error('Şifre karşılaştırma hatası:', error);
     return false;
   }
 };
