@@ -1,408 +1,235 @@
 'use client';
 
 import { Fragment } from 'react';
-import { useTheme } from '@/app/ThemeContext';
-import { Popover, Transition } from '@headlessui/react';
-import {
-  Bars3Icon,
-  XMarkIcon,
-  CreditCardIcon,
-  UserIcon,
-  QuestionMarkCircleIcon,
-  HomeIcon,
-  CurrencyDollarIcon,
-  InformationCircleIcon,
-  SunIcon,
-  MoonIcon,
-  ArrowRightOnRectangleIcon,
-  UserPlusIcon,
-  UserCircleIcon,
-  ClockIcon,
-  ChartBarIcon,
-} from '@heroicons/react/24/outline';
-import Link from 'next/link';
-import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
-
-const products = [
-  {
-    name: 'Kredi Yükle',
-    description: 'Hesabınıza kredi yükleyerek onay işlemlerinizi gerçekleştirin',
-    href: '/credit',
-    icon: CreditCardIcon,
-  },
-  {
-    name: 'Destek Al',
-    description: 'Sorularınız için destek ekibimizle iletişime geçin',
-    href: '/support',
-    icon: QuestionMarkCircleIcon,
-  },
-];
-
-const userMenuItems = [
-  {
-    name: 'Müşteri Paneli',
-    description: 'Genel bakış ve istatistikler',
-    href: '/dashboard',
-    icon: ChartBarIcon,
-  },
-  {
-    name: 'Profil Bilgileri',
-    description: 'Hesap ayarlarınızı düzenleyin',
-    href: '/profile',
-    icon: UserCircleIcon,
-  },
-  {
-    name: 'Kredi Yükle',
-    description: 'Bakiyenizi artırın',
-    href: '/credits/add',
-    icon: CreditCardIcon,
-  },
-  {
-    name: 'Onay Geçmişi',
-    description: 'Geçmiş işlemlerinizi görüntüleyin',
-    href: '/approvals/history',
-    icon: ClockIcon,
-  },
-];
+import { useTheme } from '@/app/ThemeContext';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Disclosure, Menu, Transition } from '@headlessui/react';
+import { Bars3Icon, XMarkIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 
 export function Header() {
-  const { theme, toggleTheme } = useTheme();
   const { data: session } = useSession();
+  const { theme, toggleTheme } = useTheme();
+  const pathname = usePathname();
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: '/' });
-  };
+  const navigation = [
+    { name: 'Ana Sayfa', href: '/', current: pathname === '/' },
+    ...(session ? [
+      { name: 'Panel', href: '/dashboard', current: pathname === '/dashboard' },
+      { name: 'Onay Al', href: '/dashboard/approvals/new', current: pathname === '/dashboard/approvals/new' },
+      { name: 'Kredi Yükle', href: '/dashboard/credits/add', current: pathname === '/dashboard/credits/add' },
+    ] : []),
+  ];
+
+  const userNavigation = [
+    { name: 'Profilim', href: '/dashboard/profile' },
+    { name: 'Onay Geçmişi', href: '/dashboard/approvals/history' },
+    { name: 'Kredi Geçmişi', href: '/dashboard/credits/history' },
+    { name: 'Kupon Kullan', href: '/dashboard/credits/coupon' },
+  ];
 
   return (
-    <Popover className={`fixed top-0 left-0 right-0 z-50 ${theme === 'dark' ? 'bg-gray-800/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm'} shadow-lg`}>
+    <Disclosure as="nav" className="fixed w-full top-0 z-50 bg-white dark:bg-gray-800 shadow">
       {({ open }) => (
         <>
-          <nav className="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
-            <div className="flex lg:flex-1">
-              <Link href="/" className="-m-1.5 p-1.5 flex items-center space-x-2">
-                <Image
-                  className="h-8 w-auto sm:h-10"
-                  src="/logo.png"
-                  alt="Logo"
-                  width={40}
-                  height={40}
-                  priority
-                />
-                <span className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  Microsoft Onay
-                </span>
-              </Link>
-            </div>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 justify-between">
+              <div className="flex">
+                <div className="flex flex-shrink-0 items-center">
+                  <Link href="/" className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                    Microsoft Onay
+                  </Link>
+                </div>
+                <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                  {navigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={classNames(
+                        item.current
+                          ? 'border-blue-500 text-gray-900 dark:text-white'
+                          : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white',
+                        'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium'
+                      )}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              <div className="hidden sm:ml-6 sm:flex sm:items-center">
+                <button
+                  onClick={toggleTheme}
+                  className="rounded-full bg-white dark:bg-gray-700 p-1 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
+                >
+                  {theme === 'dark' ? (
+                    <SunIcon className="h-6 w-6" aria-hidden="true" />
+                  ) : (
+                    <MoonIcon className="h-6 w-6" aria-hidden="true" />
+                  )}
+                </button>
 
-            <div className="flex lg:hidden">
-              <Popover.Button className={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                <span className="sr-only">Menüyü aç</span>
-                <Bars3Icon className="h-6 w-6" aria-hidden="true" />
-              </Popover.Button>
-            </div>
-
-            <div className="hidden lg:flex lg:gap-x-12">
-              <Link href="/" className={`text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
-                Ana Sayfa
-              </Link>
-
-              {session && (
-                <Popover className="relative">
-                  <Popover.Button className={`flex items-center gap-x-1 text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
-                    Kredi İşlemleri
-                    <CurrencyDollarIcon className="h-5 w-5" aria-hidden="true" />
-                  </Popover.Button>
-
-                  <Transition
-                    as={Fragment}
-                    enter="transition ease-out duration-200"
-                    enterFrom="opacity-0 translate-y-1"
-                    enterTo="opacity-100 translate-y-0"
-                    leave="transition ease-in duration-150"
-                    leaveFrom="opacity-100 translate-y-0"
-                    leaveTo="opacity-0 translate-y-1"
-                  >
-                    <Popover.Panel className={`absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 transform px-2 sm:px-0 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                      <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                        <div className="relative grid gap-6 px-5 py-6 sm:gap-8 sm:p-8">
-                          {products.map((item) => (
-                            <Link
-                              key={item.name}
-                              href={item.href}
-                              className={`-m-3 flex items-start rounded-lg p-3 ${
-                                theme === 'dark' 
-                                  ? 'hover:bg-gray-700' 
-                                  : 'hover:bg-gray-50'
-                              }`}
-                            >
-                              <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                              <div className="ml-4">
-                                <p className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                  {item.name}
-                                </p>
-                                <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                                  {item.description}
-                                </p>
-                              </div>
-                            </Link>
-                          ))}
+                {session ? (
+                  <Menu as="div" className="relative ml-3">
+                    <div>
+                      <Menu.Button className="flex rounded-full bg-white dark:bg-gray-800 text-sm focus:outline-none">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                            <span className="text-white font-medium">
+                              {session.user?.name?.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <span className="ml-2 text-gray-700 dark:text-gray-300">
+                            {session.user?.name}
+                          </span>
                         </div>
-                      </div>
-                    </Popover.Panel>
-                  </Transition>
-                </Popover>
-              )}
-
-              <Link href="/about" className={`text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
-                Hakkında
-              </Link>
-            </div>
-
-            <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-                aria-label={theme === 'dark' ? 'Açık temaya geç' : 'Koyu temaya geç'}
-              >
-                {theme === 'dark' ? (
-                  <SunIcon className="h-5 w-5" />
-                ) : (
-                  <MoonIcon className="h-5 w-5" />
-                )}
-              </button>
-
-              {session ? (
-                <div className="flex items-center gap-x-4">
-                  <Popover className="relative">
-                    <Popover.Button className={`flex items-center gap-x-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors duration-200`}>
-                      <UserCircleIcon className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-                      <div className="flex flex-col items-start">
-                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
-                          {session.user?.email}
-                        </span>
-                        <span className="text-sm text-blue-500 font-semibold">
-                          {session.user?.credit || 0} Kredi
-                        </span>
-                      </div>
-                    </Popover.Button>
-
+                      </Menu.Button>
+                    </div>
                     <Transition
                       as={Fragment}
                       enter="transition ease-out duration-200"
-                      enterFrom="opacity-0 translate-y-1"
-                      enterTo="opacity-100 translate-y-0"
-                      leave="transition ease-in duration-150"
-                      leaveFrom="opacity-100 translate-y-0"
-                      leaveTo="opacity-0 translate-y-1"
+                      enterFrom="transform opacity-0 scale-95"
+                      enterTo="transform opacity-100 scale-100"
+                      leave="transition ease-in duration-75"
+                      leaveFrom="transform opacity-100 scale-100"
+                      leaveTo="transform opacity-0 scale-95"
                     >
-                      <Popover.Panel className={`absolute right-0 z-10 mt-3 w-screen max-w-xs transform px-2 sm:px-0 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                        <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                          <div className="relative grid gap-6 px-5 py-6 sm:gap-8 sm:p-8">
-                            {userMenuItems.map((item) => (
+                      <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-gray-700 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        {userNavigation.map((item) => (
+                          <Menu.Item key={item.name}>
+                            {({ active }) => (
                               <Link
-                                key={item.name}
                                 href={item.href}
-                                className={`-m-3 flex items-start rounded-lg p-3 ${
-                                  theme === 'dark' 
-                                    ? 'hover:bg-gray-700' 
-                                    : 'hover:bg-gray-50'
-                                }`}
+                                className={classNames(
+                                  active ? 'bg-gray-100 dark:bg-gray-600' : '',
+                                  'block px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                                )}
                               >
-                                <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                                <div className="ml-4">
-                                  <p className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                    {item.name}
-                                  </p>
-                                  <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    {item.description}
-                                  </p>
-                                </div>
+                                {item.name}
                               </Link>
-                            ))}
-                          </div>
-                          <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-5 py-5`}>
+                            )}
+                          </Menu.Item>
+                        ))}
+                        <Menu.Item>
+                          {({ active }) => (
                             <button
-                              onClick={handleSignOut}
-                              className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-red-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-600"
+                              onClick={() => signOut()}
+                              className={classNames(
+                                active ? 'bg-gray-100 dark:bg-gray-600' : '',
+                                'block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200'
+                              )}
                             >
-                              <ArrowRightOnRectangleIcon className="h-5 w-5" />
                               Çıkış Yap
                             </button>
-                          </div>
-                        </div>
-                      </Popover.Panel>
+                          )}
+                        </Menu.Item>
+                      </Menu.Items>
                     </Transition>
-                  </Popover>
-                </div>
-              ) : (
-                <div className="flex items-center gap-x-4">
-                  <Link
-                    href="/auth/login"
-                    className="flex items-center gap-x-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-                  >
-                    <UserIcon className="h-5 w-5" />
-                    Giriş Yap
-                  </Link>
-                  <Link
-                    href="/auth/register"
-                    className="flex items-center gap-x-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-500"
-                  >
-                    <UserPlusIcon className="h-5 w-5" />
-                    Kayıt Ol
-                  </Link>
-                </div>
-              )}
-            </div>
-          </nav>
-
-          <Transition
-            as={Fragment}
-            enter="duration-200 ease-out"
-            enterFrom="opacity-0 scale-95"
-            enterTo="opacity-100 scale-100"
-            leave="duration-100 ease-in"
-            leaveFrom="opacity-100 scale-100"
-            leaveTo="opacity-0 scale-95"
-          >
-            <Popover.Panel focus className={`absolute inset-x-0 top-0 origin-top-right transform p-2 transition md:hidden ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-              <div className={`rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                <div className="px-5 pt-4 pb-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Image
-                        className="h-8 w-auto"
-                        src="/logo.png"
-                        alt="Logo"
-                        width={32}
-                        height={32}
-                        priority
-                      />
-                    </div>
-                    <div className="-mr-2">
-                      <Popover.Button className={`inline-flex items-center justify-center rounded-md p-2 ${theme === 'dark' ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-500' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-500'}`}>
-                        <span className="sr-only">Menüyü kapat</span>
-                        <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                      </Popover.Button>
-                    </div>
-                  </div>
-                  <div className="mt-6">
-                    <nav className="grid gap-y-4">
-                      {session && (
-                        <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                          <div className="flex items-center space-x-3">
-                            <UserCircleIcon className="h-6 w-6 text-blue-500" />
-                            <div>
-                              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
-                                {session.user?.email}
-                              </p>
-                              <p className="text-sm text-blue-500 font-semibold">
-                                {session.user?.credit || 0} Kredi
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <Link
-                        href="/"
-                        className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
-                      >
-                        <HomeIcon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                        <span className="ml-3 text-base font-medium">Ana Sayfa</span>
-                      </Link>
-
-                      {session && userMenuItems.map((item) => (
-                        <Link
-                          key={item.name}
-                          href={item.href}
-                          className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
-                        >
-                          <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                          <span className="ml-3 text-base font-medium">{item.name}</span>
-                        </Link>
-                      ))}
-
-                      {session && products.map((item) => (
-                        <Link
-                          key={item.name}
-                          href={item.href}
-                          className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
-                        >
-                          <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                          <span className="ml-3 text-base font-medium">{item.name}</span>
-                        </Link>
-                      ))}
-
-                      <Link
-                        href="/about"
-                        className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
-                      >
-                        <InformationCircleIcon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                        <span className="ml-3 text-base font-medium">Hakkında</span>
-                      </Link>
-                    </nav>
-                  </div>
-                </div>
-                <div className={`px-5 py-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <button
-                      onClick={toggleTheme}
-                      className={`p-2 rounded-lg transition-all duration-200 ${
-                        theme === 'dark' 
-                          ? 'bg-gray-600 text-yellow-400 hover:bg-gray-500' 
-                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                      }`}
+                  </Menu>
+                ) : (
+                  <div className="ml-6 flex items-center space-x-4">
+                    <Link
+                      href="/auth/login"
+                      className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white text-sm font-medium"
                     >
-                      {theme === 'dark' ? (
-                        <SunIcon className="h-5 w-5" />
-                      ) : (
-                        <MoonIcon className="h-5 w-5" />
-                      )}
-                    </button>
+                      Giriş Yap
+                    </Link>
+                    <Link
+                      href="/auth/register"
+                      className="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-md text-sm font-medium"
+                    >
+                      Kayıt Ol
+                    </Link>
                   </div>
-                  <div className="space-y-2">
-                    {session ? (
-                      <button
-                        onClick={handleSignOut}
-                        className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-red-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-600"
-                      >
-                        <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                        Çıkış Yap
-                      </button>
-                    ) : (
-                      <>
-                        <Link
-                          href="/auth/login"
-                          className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-600"
-                        >
-                          <UserIcon className="h-5 w-5" />
-                          Giriş Yap
-                        </Link>
-                        <Link
-                          href="/auth/register"
-                          className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-green-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-600"
-                        >
-                          <UserPlusIcon className="h-5 w-5" />
-                          Kayıt Ol
-                        </Link>
-                      </>
-                    )}
+                )}
+              </div>
+              <div className="-mr-2 flex items-center sm:hidden">
+                <Disclosure.Button className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300">
+                  {open ? (
+                    <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
+                  ) : (
+                    <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
+                  )}
+                </Disclosure.Button>
+              </div>
+            </div>
+          </div>
+
+          <Disclosure.Panel className="sm:hidden">
+            <div className="space-y-1 pb-3 pt-2">
+              {navigation.map((item) => (
+                <Disclosure.Button
+                  key={item.name}
+                  as={Link}
+                  href={item.href}
+                  className={classNames(
+                    item.current
+                      ? 'bg-blue-50 dark:bg-blue-900 border-blue-500 text-blue-700 dark:text-blue-200'
+                      : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
+                    'block border-l-4 py-2 pl-3 pr-4 text-base font-medium'
+                  )}
+                >
+                  {item.name}
+                </Disclosure.Button>
+              ))}
+            </div>
+            {session ? (
+              <div className="border-t border-gray-200 dark:border-gray-700 pb-3 pt-4">
+                <div className="flex items-center px-4">
+                  <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                    <span className="text-white font-medium">
+                      {session.user?.name?.charAt(0).toUpperCase()}
+                    </span>
                   </div>
+                  <div className="ml-3">
+                    <div className="text-base font-medium text-gray-800 dark:text-white">{session.user?.name}</div>
+                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{session.user?.email}</div>
+                  </div>
+                </div>
+                <div className="mt-3 space-y-1">
+                  {userNavigation.map((item) => (
+                    <Disclosure.Button
+                      key={item.name}
+                      as={Link}
+                      href={item.href}
+                      className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+                    >
+                      {item.name}
+                    </Disclosure.Button>
+                  ))}
+                  <Disclosure.Button
+                    as="button"
+                    onClick={() => signOut()}
+                    className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+                  >
+                    Çıkış Yap
+                  </Disclosure.Button>
                 </div>
               </div>
-            </Popover.Panel>
-          </Transition>
+            ) : (
+              <div className="border-t border-gray-200 dark:border-gray-700 pb-3 pt-4 px-4 space-y-2">
+                <Link
+                  href="/auth/login"
+                  className="block text-gray-500 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white text-base font-medium"
+                >
+                  Giriş Yap
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="block bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-md text-base font-medium text-center"
+                >
+                  Kayıt Ol
+                </Link>
+              </div>
+            )}
+          </Disclosure.Panel>
         </>
       )}
-    </Popover>
+    </Disclosure>
   );
 } 
