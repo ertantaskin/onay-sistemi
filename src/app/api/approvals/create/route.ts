@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     });
 
     // Kredi işlemini oluştur
-    const transaction = await CreditTransaction.create({
+    await CreditTransaction.create({
       userId: session.user.id,
       amount: -APPROVAL_COST,
       type: 'approval',

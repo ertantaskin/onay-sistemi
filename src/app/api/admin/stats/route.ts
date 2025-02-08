@@ -15,7 +15,7 @@ async function isAdmin(session: any) {
   return true;
 }
 
-export async function GET(req: Request) {
+export async function GET(_req: Request) {
   try {
     const session = await getServerSession(authOptions);
     

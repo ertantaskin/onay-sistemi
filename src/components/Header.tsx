@@ -11,6 +11,7 @@ import {
   InformationCircleIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import Image from 'next/image'
 
 const products = [
   {
@@ -40,10 +41,12 @@ export default function Header() {
           <div className="flex justify-start lg:w-0 lg:flex-1">
             <Link href="/">
               <span className="sr-only">Microsoft Onay Sistemi</span>
-              <img
+              <Image
                 className="h-8 w-auto sm:h-10"
                 src="/logo.png"
                 alt="Logo"
+                width={40}
+                height={40}
               />
             </Link>
           </div>
@@ -136,10 +139,12 @@ export default function Header() {
             <div className="px-5 pt-5 pb-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <img
+                  <Image
                     className="h-8 w-auto"
                     src="/logo.png"
                     alt="Logo"
+                    width={32}
+                    height={32}
                   />
                 </div>
                 <div className="-mr-2">
