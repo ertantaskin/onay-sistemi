@@ -171,7 +171,7 @@ export function Header() {
                 <Link
                   href="/"
                   className={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 ${
-                    theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                    theme === 'dark' ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   Ana Sayfa
@@ -180,7 +180,7 @@ export function Header() {
                   {({ open }) => (
                     <>
                       <Disclosure.Button className={`flex w-full items-center justify-between rounded-lg py-2 pl-3 pr-3.5 text-base font-semibold leading-7 ${
-                        theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                        theme === 'dark' ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
                       }`}>
                         Kredi İşlemleri
                         <ChevronDownIcon
@@ -195,7 +195,7 @@ export function Header() {
                             as="a"
                             href={item.href}
                             className={`block rounded-lg py-2 pl-6 pr-3 text-sm font-semibold leading-7 ${
-                              theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                              theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
                             }`}
                           >
                             <div className="flex items-center gap-x-3">
@@ -211,7 +211,7 @@ export function Header() {
                 <Link
                   href="/about"
                   className={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 ${
-                    theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                    theme === 'dark' ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   Hakkında
@@ -219,7 +219,7 @@ export function Header() {
                 <Link
                   href="/contact"
                   className={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 ${
-                    theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                    theme === 'dark' ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   İletişim
