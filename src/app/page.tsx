@@ -4,7 +4,6 @@ import { useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import axios, { AxiosError } from 'axios';
 import { useTheme } from './ThemeContext';
-import Image from 'next/image';
 
 interface ApiResponse {
   short_result: string;
