@@ -185,9 +185,14 @@ export function Header() {
                   <Popover className="relative">
                     <Popover.Button className={`flex items-center gap-x-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors duration-200`}>
                       <UserCircleIcon className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-                      <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
-                        {session.user?.email}
-                      </span>
+                      <div className="flex flex-col items-start">
+                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+                          {session.user?.email}
+                        </span>
+                        <span className="text-sm text-blue-500 font-semibold">
+                          {session.user?.credit || 0} Kredi
+                        </span>
+                      </div>
                     </Popover.Button>
 
                     <Transition
@@ -291,6 +296,22 @@ export function Header() {
                   </div>
                   <div className="mt-6">
                     <nav className="grid gap-y-4">
+                      {session && (
+                        <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                          <div className="flex items-center space-x-3">
+                            <UserCircleIcon className="h-6 w-6 text-blue-500" />
+                            <div>
+                              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+                                {session.user?.email}
+                              </p>
+                              <p className="text-sm text-blue-500 font-semibold">
+                                {session.user?.credit || 0} Kredi
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <Link
                         href="/"
                         className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
@@ -298,6 +319,17 @@ export function Header() {
                         <HomeIcon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
                         <span className="ml-3 text-base font-medium">Ana Sayfa</span>
                       </Link>
+
+                      {session && userMenuItems.map((item) => (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
+                        >
+                          <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
+                          <span className="ml-3 text-base font-medium">{item.name}</span>
+                        </Link>
+                      ))}
 
                       {session && products.map((item) => (
                         <Link
@@ -322,9 +354,6 @@ export function Header() {
                 </div>
                 <div className={`px-5 py-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
                   <div className="flex items-center justify-between mb-4">
-                    <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
-                      {session?.user?.email}
-                    </span>
                     <button
                       onClick={toggleTheme}
                       className={`p-2 rounded-lg transition-all duration-200 ${
