@@ -230,19 +230,19 @@ export function Header() {
                   onClick={toggleTheme}
                   className={`w-full flex items-center justify-center gap-x-2.5 p-3 text-sm font-semibold leading-6 ${
                     theme === 'dark' 
-                      ? 'bg-gray-700 hover:bg-gray-600' 
-                      : 'bg-gray-100 hover:bg-gray-200'
+                      ? 'bg-gray-700/50 hover:bg-gray-600/50 text-gray-200' 
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                   } rounded-lg mb-2 transition-all duration-200`}
                 >
                   {theme === 'dark' ? (
                     <>
                       <SunIcon className="h-5 w-5 text-yellow-400" />
-                      <span className="text-gray-200">Açık Temaya Geç</span>
+                      <span>Açık Temaya Geç</span>
                     </>
                   ) : (
                     <>
-                      <MoonIcon className="h-5 w-5 text-gray-600" />
-                      <span className="text-gray-700">Koyu Temaya Geç</span>
+                      <MoonIcon className="h-5 w-5 text-blue-500" />
+                      <span>Koyu Temaya Geç</span>
                     </>
                   )}
                 </button>
