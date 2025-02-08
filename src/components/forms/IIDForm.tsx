@@ -89,9 +89,9 @@ export function IIDForm() {
           setResult({
             status: 'error',
             data: apiResponse,
-            message: apiResponse.result || 'Geçersiz IID numarası'
+            message: 'Girdiğiniz IID numarası geçersiz. Lütfen numaraları tekrar kontrol edin ve lisansın aktif olduğundan emin olun.'
           });
-          toast.error(apiResponse.result || 'Geçersiz IID numarası');
+          toast.error('Geçersiz IID numarası');
         } else {
           setResult({
             status: 'success',
@@ -103,8 +103,8 @@ export function IIDForm() {
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof AxiosError 
-        ? error.response?.data?.message || 'API yanıt hatası'
-        : 'Bir hata oluştu';
+        ? error.response?.data?.message || 'Sunucu yanıt hatası'
+        : 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.';
       setResult({
         status: 'error',
         message: errorMessage
@@ -258,6 +258,29 @@ export function IIDForm() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                     </svg>
                   </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {result.status === 'error' && (
+            <div className="p-6">
+              <div className={`p-4 rounded-lg ${
+                theme === 'dark' ? 'bg-gray-700/50' : 'bg-white'
+              } border border-opacity-10 shadow-sm`}>
+                <div className="space-y-4">
+                  <p className="text-base">
+                    {result.message}
+                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium opacity-75">Kontrol listesi:</p>
+                    <ul className="text-sm space-y-1 list-disc list-inside opacity-75">
+                      <li>Tüm kutucukların doğru doldurulduğundan emin olun</li>
+                      <li>Her kutucukta 7 rakam olmalıdır</li>
+                      <li>IID numarasını kurulum ekranından doğru kopyaladığınızdan emin olun</li>
+                      <li>Microsoft ürününüzün lisansının aktif olduğundan emin olun</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
