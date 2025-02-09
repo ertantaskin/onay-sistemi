@@ -26,7 +26,27 @@ export async function POST(req: Request) {
 
     await dbConnect();
 
-    // Onay kaydı oluştur
+    // Aynı IID numarası için önceki kaydı kontrol et
+    const existingApproval = await Approval.findOne({
+      userId: session.user.id,
+      iidNumber: iidNumber,
+    });
+
+    if (existingApproval) {
+      console.log('Bu IID numarası için önceki kayıt bulundu:', existingApproval);
+      return NextResponse.json({
+        message: 'Bu IID numarası için daha önce onay alınmış.',
+        approval: {
+          id: existingApproval._id,
+          confirmationNumber: existingApproval.confirmationNumber,
+          iidNumber: existingApproval.iidNumber,
+          status: existingApproval.status,
+          createdAt: existingApproval.createdAt,
+        },
+      });
+    }
+
+    // Yeni onay kaydı oluştur
     const approval = await Approval.create({
       userId: session.user.id,
       iidNumber,
@@ -34,7 +54,13 @@ export async function POST(req: Request) {
       status: 'success',
     });
 
-    console.log('Yeni onay kaydı oluşturuldu:', approval);
+    console.log('Yeni onay kaydı oluşturuldu:', {
+      id: approval._id,
+      userId: approval.userId,
+      iidNumber: approval.iidNumber,
+      status: approval.status,
+      createdAt: approval.createdAt,
+    });
 
     return NextResponse.json({
       message: 'Onay kaydı başarıyla oluşturuldu.',

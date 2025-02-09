@@ -93,7 +93,7 @@ export function IIDForm() {
           });
           toast.error('Geçersiz IID numarası');
         } else {
-          // Onay başarılı olduğunda veritabanına kaydet
+          // Önce veritabanına kaydet, başarılı olursa sonucu göster
           try {
             const saveResponse = await fetch('/api/approvals/create', {
               method: 'POST',
@@ -113,17 +113,25 @@ export function IIDForm() {
             }
 
             console.log('Onay kaydı başarılı:', saveData);
+
+            // Kayıt başarılı olduktan sonra sonucu göster
+            setResult({
+              status: 'success',
+              data: apiResponse,
+              message: 'Onay numarası başarıyla alındı ve kaydedildi!'
+            });
+            toast.success('Onay numarası başarıyla alındı ve kaydedildi!');
           } catch (error) {
             console.error('Onay kaydı hatası:', error);
             toast.error('Onay numarası alındı fakat kayıt edilemedi');
+            
+            // Kayıt başarısız olsa da onay numarasını göster
+            setResult({
+              status: 'success',
+              data: apiResponse,
+              message: 'Onay numarası alındı fakat kayıt edilemedi!'
+            });
           }
-
-          setResult({
-            status: 'success',
-            data: apiResponse,
-            message: 'Onay numarası başarıyla alındı!'
-          });
-          toast.success('Onay numarası başarıyla alındı!');
         }
       }
     } catch (error: unknown) {
