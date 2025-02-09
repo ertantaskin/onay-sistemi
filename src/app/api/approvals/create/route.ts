@@ -2,11 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
 import Approval from '@/models/Approval';
-import CreditTransaction from '@/models/CreditTransaction';
-
-const APPROVAL_COST = 10; // Her onay için gerekli kredi miktarı
 
 export async function POST(req: Request) {
   try {
@@ -30,39 +26,15 @@ export async function POST(req: Request) {
 
     await dbConnect();
 
-    // Kullanıcının yeterli kredisi var mı kontrol et
-    const user = await User.findById(session.user.id);
-    if (!user || user.credit < APPROVAL_COST) {
-      return NextResponse.json(
-        { error: 'Yeterli krediniz bulunmamaktadır.' },
-        { status: 400 }
-      );
-    }
-
     // Onay kaydı oluştur
     const approval = await Approval.create({
       userId: session.user.id,
       iidNumber,
       confirmationNumber,
       status: 'success',
-      createdAt: new Date(),
     });
 
-    // Kredi işlemini oluştur
-    await CreditTransaction.create({
-      userId: session.user.id,
-      amount: -APPROVAL_COST,
-      type: 'approval',
-      status: 'completed',
-      description: `Onay alımı: ${iidNumber}`,
-    });
-
-    // Kullanıcının kredisini güncelle
-    const updatedUser = await User.findByIdAndUpdate(
-      session.user.id,
-      { $inc: { credit: -APPROVAL_COST } },
-      { new: true }
-    );
+    console.log('Yeni onay kaydı oluşturuldu:', approval);
 
     return NextResponse.json({
       message: 'Onay kaydı başarıyla oluşturuldu.',
@@ -73,7 +45,6 @@ export async function POST(req: Request) {
         status: approval.status,
         createdAt: approval.createdAt,
       },
-      newBalance: updatedUser.credit,
     });
   } catch (error) {
     console.error('Onay kayıt hatası:', error);

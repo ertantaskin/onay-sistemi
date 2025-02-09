@@ -5,14 +5,17 @@ const approvalSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
+    index: true,
   },
   iidNumber: {
     type: String,
     required: true,
+    trim: true,
   },
   confirmationNumber: {
     type: String,
     required: true,
+    trim: true,
   },
   status: {
     type: String,
@@ -24,8 +27,7 @@ const approvalSchema = new mongoose.Schema({
 });
 
 // İndexler
-approvalSchema.index({ userId: 1, createdAt: -1 });
-approvalSchema.index({ iidNumber: 1 });
+approvalSchema.index({ createdAt: -1 });
 
 const Approval = mongoose.models.Approval || mongoose.model('Approval', approvalSchema);
 

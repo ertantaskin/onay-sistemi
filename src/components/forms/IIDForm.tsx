@@ -95,7 +95,7 @@ export function IIDForm() {
         } else {
           // Onay başarılı olduğunda veritabanına kaydet
           try {
-            await fetch('/api/approvals/create', {
+            const saveResponse = await fetch('/api/approvals/create', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -105,8 +105,17 @@ export function IIDForm() {
                 confirmationNumber: apiResponse.confirmation_id_with_dash,
               }),
             });
+
+            const saveData = await saveResponse.json();
+
+            if (!saveResponse.ok) {
+              throw new Error(saveData.error || 'Onay kaydı başarısız oldu');
+            }
+
+            console.log('Onay kaydı başarılı:', saveData);
           } catch (error) {
             console.error('Onay kaydı hatası:', error);
+            toast.error('Onay numarası alındı fakat kayıt edilemedi');
           }
 
           setResult({
