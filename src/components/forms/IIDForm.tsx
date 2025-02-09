@@ -25,7 +25,7 @@ export function IIDForm() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{
-    status: 'success' | 'error';
+    status: 'success' | 'error' | 'warning';
     data?: ApiResponse;
     message: string;
   } | null>(null);
@@ -93,8 +93,9 @@ export function IIDForm() {
           });
           toast.error('Geçersiz IID numarası');
         } else {
-          // Önce veritabanına kaydet, başarılı olursa sonucu göster
+          // Önce veritabanına kaydet
           try {
+            console.log('Onay kaydı başlatılıyor...');
             const saveResponse = await fetch('/api/approvals/create', {
               method: 'POST',
               headers: {
@@ -106,12 +107,12 @@ export function IIDForm() {
               }),
             });
 
-            const saveData = await saveResponse.json();
-
             if (!saveResponse.ok) {
-              throw new Error(saveData.error || 'Onay kaydı başarısız oldu');
+              const errorData = await saveResponse.json();
+              throw new Error(errorData.error || 'Onay kaydı başarısız oldu');
             }
 
+            const saveData = await saveResponse.json();
             console.log('Onay kaydı başarılı:', saveData);
 
             // Kayıt başarılı olduktan sonra sonucu göster
@@ -123,18 +124,20 @@ export function IIDForm() {
             toast.success('Onay numarası başarıyla alındı ve kaydedildi!');
           } catch (error) {
             console.error('Onay kaydı hatası:', error);
-            toast.error('Onay numarası alındı fakat kayıt edilemedi');
+            const errorMessage = error instanceof Error ? error.message : 'Onay numarası alındı fakat kayıt edilemedi';
+            toast.error(errorMessage);
             
             // Kayıt başarısız olsa da onay numarasını göster
             setResult({
-              status: 'success',
+              status: 'warning',
               data: apiResponse,
-              message: 'Onay numarası alındı fakat kayıt edilemedi!'
+              message: errorMessage
             });
           }
         }
       }
     } catch (error: unknown) {
+      console.error('API hatası:', error);
       const errorMessage = error instanceof AxiosError 
         ? error.response?.data?.message || 'Sunucu yanıt hatası'
         : 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.';

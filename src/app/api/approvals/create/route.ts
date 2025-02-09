@@ -8,7 +8,8 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session) {
+    if (!session?.user?.id) {
+      console.error('Oturum bilgisi eksik veya geçersiz');
       return NextResponse.json(
         { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
         { status: 401 }
@@ -18,22 +19,28 @@ export async function POST(req: Request) {
     const { iidNumber, confirmationNumber } = await req.json();
 
     if (!iidNumber || !confirmationNumber) {
+      console.error('Eksik veri:', { iidNumber, confirmationNumber });
       return NextResponse.json(
         { error: 'IID numarası ve onay numarası gereklidir.' },
         { status: 400 }
       );
     }
 
-    await dbConnect();
+    console.log('Veritabanı bağlantısı başlatılıyor...');
+    const db = await dbConnect();
+    console.log('Veritabanı bağlantısı başarılı:', !!db);
 
     // Aynı IID numarası için önceki kaydı kontrol et
     const existingApproval = await Approval.findOne({
       userId: session.user.id,
       iidNumber: iidNumber,
-    });
+    }).exec();
 
     if (existingApproval) {
-      console.log('Bu IID numarası için önceki kayıt bulundu:', existingApproval);
+      console.log('Bu IID numarası için önceki kayıt bulundu:', {
+        id: existingApproval._id,
+        iidNumber: existingApproval.iidNumber,
+      });
       return NextResponse.json({
         message: 'Bu IID numarası için daha önce onay alınmış.',
         approval: {
@@ -46,20 +53,19 @@ export async function POST(req: Request) {
       });
     }
 
+    console.log('Yeni onay kaydı oluşturuluyor...');
     // Yeni onay kaydı oluştur
     const approval = await Approval.create({
       userId: session.user.id,
-      iidNumber,
-      confirmationNumber,
+      iidNumber: iidNumber.trim(),
+      confirmationNumber: confirmationNumber.trim(),
       status: 'success',
     });
 
     console.log('Yeni onay kaydı oluşturuldu:', {
       id: approval._id,
-      userId: approval.userId,
       iidNumber: approval.iidNumber,
       status: approval.status,
-      createdAt: approval.createdAt,
     });
 
     return NextResponse.json({
@@ -75,7 +81,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Onay kayıt hatası:', error);
     return NextResponse.json(
-      { error: 'Onay kaydedilirken bir hata oluştu.' },
+      { error: error instanceof Error ? error.message : 'Onay kaydedilirken bir hata oluştu.' },
       { status: 500 }
     );
   }
