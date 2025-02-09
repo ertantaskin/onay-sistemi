@@ -33,7 +33,12 @@ export async function POST(req: Request) {
     });
 
     if (existingApproval) {
-      console.log('Bu IID numarası için önceki kayıt bulundu:', existingApproval);
+      console.log('Bu IID numarası için önceki kayıt bulundu:', {
+        id: existingApproval._id,
+        userId: existingApproval.userId,
+        iidNumber: existingApproval.iidNumber,
+      });
+      
       return NextResponse.json({
         message: 'Bu IID numarası için daha önce onay alınmış.',
         approval: {
@@ -58,6 +63,7 @@ export async function POST(req: Request) {
       id: approval._id,
       userId: approval.userId,
       iidNumber: approval.iidNumber,
+      confirmationNumber: approval.confirmationNumber,
       status: approval.status,
       createdAt: approval.createdAt,
     });
@@ -74,6 +80,14 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Onay kayıt hatası:', error);
+    
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: `Onay kaydedilirken bir hata oluştu: ${error.message}` },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Onay kaydedilirken bir hata oluştu.' },
       { status: 500 }

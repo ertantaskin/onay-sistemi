@@ -69,77 +69,78 @@ export function IIDForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const fullIID = iidParts.join('');
+
+    if (fullIID.length !== 63) {
+      toast.error('Lütfen tüm IID alanlarını doldurun');
+      return;
+    }
+
     setLoading(true);
     setResult(null);
-
+    
     try {
-      const fullIID = iidParts.join('');
-      if (fullIID.length !== 9) {
-        setResult({
-          status: 'error',
-          message: 'Lütfen 9 haneli IID numarasını eksiksiz girin.',
-        });
-        toast.error('Eksik IID numarası');
-        return;
-      }
-
-      const response = await fetch(`https://api.example.com/check-iid?iid=${fullIID}`);
-      const apiResponse = await response.json();
-
-      if (!response.ok || apiResponse.error_executing || apiResponse.had_occurred) {
-        setResult({
-          status: 'error',
-          data: apiResponse,
-          message: 'Girdiğiniz IID numarası geçersiz. Lütfen numaraları tekrar kontrol edin ve lisansın aktif olduğundan emin olun.'
-        });
-        toast.error('Geçersiz IID numarası');
-        return;
-      }
-
-      // Veritabanına kaydet
-      try {
-        const saveResponse = await fetch('/api/approvals/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            iidNumber: fullIID,
-            confirmationNumber: apiResponse.confirmation_id_with_dash,
-          }),
-        });
-
-        const saveData = await saveResponse.json();
-
-        if (!saveResponse.ok) {
-          throw new Error(saveData.error || 'Onay kaydı başarısız oldu');
-        }
-
-        // Başarılı kayıt
-        setResult({
-          status: 'success',
-          data: apiResponse,
-          message: 'Onay numarası başarıyla alındı ve kaydedildi!'
-        });
-        toast.success('Onay numarası başarıyla alındı ve kaydedildi!');
-      } catch (error) {
-        console.error('Onay kaydı hatası:', error);
+      const response = await axios.get(`https://pidkey.com/ajax/cidms_api?iids=${fullIID}&justforcheck=0&apikey=Sd0zJS8vlm5VnkltMR2CqPI8n`);
+      
+      if (response.data) {
+        const apiResponse = response.data as ApiResponse;
         
-        // Kayıt hatası durumunda
-        setResult({
-          status: 'error',
-          data: apiResponse,
-          message: error instanceof Error ? error.message : 'Onay kaydedilirken bir hata oluştu'
-        });
-        toast.error('Onay kaydedilirken bir hata oluştu');
+        if (apiResponse.error_executing || apiResponse.had_occurred || !apiResponse.confirmation_id_with_dash) {
+          setResult({
+            status: 'error',
+            data: apiResponse,
+            message: 'Girdiğiniz IID numarası geçersiz. Lütfen numaraları tekrar kontrol edin ve lisansın aktif olduğundan emin olun.'
+          });
+          toast.error('Geçersiz IID numarası');
+        } else {
+          // Önce veritabanına kaydet
+          try {
+            const saveResponse = await fetch('/api/approvals/create', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                iidNumber: fullIID,
+                confirmationNumber: apiResponse.confirmation_id_with_dash,
+              }),
+            });
+
+            const saveData = await saveResponse.json();
+
+            if (!saveResponse.ok) {
+              throw new Error(saveData.error || 'Onay kaydı başarısız oldu');
+            }
+
+            // Başarılı kayıt durumu
+            setResult({
+              status: 'success',
+              data: apiResponse,
+              message: 'Onay numarası başarıyla alındı ve kaydedildi!'
+            });
+            toast.success('Onay numarası başarıyla alındı ve kaydedildi!');
+          } catch (error) {
+            console.error('Onay kaydı hatası:', error);
+            toast.error('Onay kaydedilirken bir hata oluştu');
+            
+            // Kayıt başarısız olsa da onay numarasını göster
+            setResult({
+              status: 'error',
+              data: apiResponse,
+              message: 'Onay numarası alındı fakat kayıt edilemedi!'
+            });
+          }
+        }
       }
-    } catch (error) {
-      console.error('API hatası:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof AxiosError 
+        ? error.response?.data?.message || 'Sunucu yanıt hatası'
+        : 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.';
       setResult({
         status: 'error',
-        message: error instanceof Error ? error.message : 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+        message: errorMessage
       });
-      toast.error('Bir hata oluştu');
+      toast.error(`İşlem başarısız: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
