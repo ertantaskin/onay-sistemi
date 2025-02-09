@@ -10,8 +10,6 @@ interface Approval {
   id: string;
   confirmationNumber: string;
   iidNumber: string;
-  productType: string;
-  creditUsed: number;
   status: string;
   createdAt: string;
 }
@@ -101,12 +99,6 @@ export default function ApprovalHistoryPage() {
                       IID
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Ürün
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Kredi
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Durum
                     </th>
                   </tr>
@@ -122,12 +114,6 @@ export default function ApprovalHistoryPage() {
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
                         {approval.iidNumber}
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
-                        {approval.productType}
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
-                        {approval.creditUsed}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${

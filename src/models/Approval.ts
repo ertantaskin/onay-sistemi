@@ -28,7 +28,6 @@ const approvalSchema = new mongoose.Schema({
 
 // İndexler
 approvalSchema.index({ createdAt: -1 });
-approvalSchema.index({ userId: 1, iidNumber: 1 }, { unique: true });
 
 const Approval = mongoose.models.Approval || mongoose.model('Approval', approvalSchema);
 
