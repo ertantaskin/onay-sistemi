@@ -15,20 +15,32 @@ interface Approval {
 }
 
 export default function ApprovalHistoryPage() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const { theme } = useTheme();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
+    if (sessionStatus === 'loading') return;
+    
+    if (!session) {
+      router.push('/auth/login');
+      return;
+    }
+
     fetchApprovals();
-  }, [page]);
+  }, [session, sessionStatus, page]);
 
   const fetchApprovals = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Onay geçmişi getiriliyor...');
       const response = await fetch(`/api/approvals/history?page=${page}&limit=10`);
       const data = await response.json();
 
@@ -36,10 +48,14 @@ export default function ApprovalHistoryPage() {
         throw new Error(data.error || 'Onay geçmişi alınamadı.');
       }
 
+      console.log('Gelen veriler:', data);
       setApprovals(data.approvals);
       setTotalPages(data.pagination.totalPages);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Bir hata oluştu.');
+      console.error('Veri getirme hatası:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Bir hata oluştu.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -54,6 +70,33 @@ export default function ApprovalHistoryPage() {
       minute: '2-digit',
     });
   };
+
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Kopyalandı!');
+    } catch (error) {
+      toast.error('Kopyalama başarısız oldu');
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className={`${theme === 'dark' ? 'bg-red-900/20' : 'bg-red-50'} p-4 rounded-xl text-center`}>
+          <p className={`text-lg ${theme === 'dark' ? 'text-red-200' : 'text-red-800'}`}>
+            {error}
+          </p>
+          <button
+            onClick={fetchApprovals}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Tekrar Dene
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -101,6 +144,9 @@ export default function ApprovalHistoryPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Durum
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      İşlemler
+                    </th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
@@ -123,6 +169,17 @@ export default function ApprovalHistoryPage() {
                         }`}>
                           {approval.status === 'success' ? 'Başarılı' : 'Başarısız'}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <button
+                          onClick={() => handleCopy(approval.confirmationNumber)}
+                          className="text-blue-500 hover:text-blue-600 focus:outline-none"
+                          title="Onay Numarasını Kopyala"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                          </svg>
+                        </button>
                       </td>
                     </tr>
                   ))}
