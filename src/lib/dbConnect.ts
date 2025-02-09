@@ -14,7 +14,6 @@ if (!cached) {
 
 async function dbConnect() {
   if (cached.conn) {
-    console.log('Mevcut bağlantı kullanılıyor...');
     return cached.conn;
   }
 
@@ -22,33 +21,33 @@ async function dbConnect() {
     const opts = {
       bufferCommands: false,
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-      family: 4
+      family: 4,
+      retryWrites: true,
+      writeConcern: {
+        w: 'majority'
+      }
     };
 
-    console.log('MongoDB bağlantısı başlatılıyor...');
-    console.log('MongoDB URI:', MONGODB_URI.replace(/:[^:@]+@/, ':****@'));
-
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      console.log('MongoDB bağlantısı başarılı!');
-      return mongoose;
-    }).catch((error) => {
+    try {
+      cached.promise = mongoose.connect(MONGODB_URI, opts);
+      cached.conn = await cached.promise;
+      return cached.conn;
+    } catch (error) {
       console.error('MongoDB bağlantı hatası:', error);
+      cached.promise = null;
       throw error;
-    });
-  } else {
-    console.log('Mevcut bağlantı promise kullanılıyor...');
+    }
   }
 
   try {
     cached.conn = await cached.promise;
-    console.log('Bağlantı durumu:', mongoose.connection.readyState);
     return cached.conn;
-  } catch (e) {
-    console.error('Bağlantı hatası:', e);
+  } catch (error) {
+    console.error('Bağlantı hatası:', error);
     cached.promise = null;
-    throw e;
+    throw error;
   }
 }
 

@@ -14,13 +14,11 @@ const approvalSchema = new mongoose.Schema<IApproval>({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Kullanıcı ID gereklidir'],
-    index: true,
   },
   iidNumber: {
     type: String,
     required: [true, 'IID numarası gereklidir'],
     trim: true,
-    index: true,
   },
   confirmationNumber: {
     type: String,
@@ -34,18 +32,22 @@ const approvalSchema = new mongoose.Schema<IApproval>({
       message: 'Geçersiz durum değeri',
     },
     default: 'success',
-    index: true,
   },
 }, {
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true },
+  collection: 'approvals',
+  strict: true,
+  strictQuery: true,
 });
 
-// İndexler
+// Tekil indeks yerine bileşik indeks kullanıyoruz
+approvalSchema.index({ userId: 1, iidNumber: 1 });
 approvalSchema.index({ createdAt: -1 });
-approvalSchema.index({ userId: 1, iidNumber: 1 }, { unique: true });
+approvalSchema.index({ status: 1 });
 
-const Approval = mongoose.models.Approval || mongoose.model<IApproval>('Approval', approvalSchema);
+// Model oluşturulmadan önce koleksiyonu temizle
+delete mongoose.models.Approval;
+
+const Approval = mongoose.model<IApproval>('Approval', approvalSchema);
 
 export default Approval; 
