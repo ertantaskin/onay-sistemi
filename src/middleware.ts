@@ -3,18 +3,15 @@ import { NextResponse } from 'next/server';
 
 export default withAuth(
   function middleware(req) {
-    // Admin sayfalarına sadece admin kullanıcılar erişebilir
-    if (
-      req.nextUrl.pathname.startsWith('/dashboard/admin') &&
-      req.nextauth.token?.role !== 'admin'
-    ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
+    // Auth kontrolü başarılı ise devam et
     return NextResponse.next();
   },
   {
     callbacks: {
       authorized: ({ token }) => !!token,
+    },
+    pages: {
+      signIn: '/auth/login',
     },
   }
 );
@@ -22,6 +19,5 @@ export default withAuth(
 export const config = {
   matcher: [
     '/dashboard/:path*',
-    '/profile/:path*',
   ],
 }; 
