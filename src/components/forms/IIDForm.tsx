@@ -93,6 +93,22 @@ export function IIDForm() {
           });
           toast.error('Geçersiz IID numarası');
         } else {
+          // Onay başarılı olduğunda veritabanına kaydet
+          try {
+            await fetch('/api/approvals/create', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                iidNumber: fullIID,
+                confirmationNumber: apiResponse.confirmation_id_with_dash,
+              }),
+            });
+          } catch (error) {
+            console.error('Onay kaydı hatası:', error);
+          }
+
           setResult({
             status: 'success',
             data: apiResponse,

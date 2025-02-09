@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
 import Approval from '@/models/Approval';
@@ -19,11 +19,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const { iidNumber, productType } = await req.json();
+    const { iidNumber, confirmationNumber } = await req.json();
 
-    if (!iidNumber || !productType) {
+    if (!iidNumber || !confirmationNumber) {
       return NextResponse.json(
-        { error: 'IID numarası ve ürün tipi gereklidir.' },
+        { error: 'IID numarası ve onay numarası gereklidir.' },
         { status: 400 }
       );
     }
@@ -39,17 +39,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // Onay numarası oluştur (örnek: rastgele 8 haneli numara)
-    const confirmationNumber = Math.floor(10000000 + Math.random() * 90000000).toString();
-
     // Onay kaydı oluştur
     const approval = await Approval.create({
       userId: session.user.id,
       iidNumber,
       confirmationNumber,
-      productType,
-      creditUsed: APPROVAL_COST,
-      status: 'completed',
+      status: 'success',
+      createdAt: new Date(),
     });
 
     // Kredi işlemini oluştur
@@ -69,21 +65,20 @@ export async function POST(req: Request) {
     );
 
     return NextResponse.json({
-      message: 'Onay başarıyla alındı.',
+      message: 'Onay kaydı başarıyla oluşturuldu.',
       approval: {
         id: approval._id,
         confirmationNumber: approval.confirmationNumber,
         iidNumber: approval.iidNumber,
-        productType: approval.productType,
-        creditUsed: approval.creditUsed,
+        status: approval.status,
         createdAt: approval.createdAt,
       },
       newBalance: updatedUser.credit,
     });
   } catch (error) {
-    console.error('Onay alma hatası:', error);
+    console.error('Onay kayıt hatası:', error);
     return NextResponse.json(
-      { error: 'Onay alma işlemi sırasında bir hata oluştu.' },
+      { error: 'Onay kaydedilirken bir hata oluştu.' },
       { status: 500 }
     );
   }

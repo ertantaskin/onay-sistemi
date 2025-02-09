@@ -14,18 +14,10 @@ const approvalSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  productType: {
-    type: String,
-    required: true,
-  },
-  creditUsed: {
-    type: Number,
-    required: true,
-  },
   status: {
     type: String,
     enum: ['success', 'failed'],
-    required: true,
+    default: 'success',
   },
 }, {
   timestamps: true,

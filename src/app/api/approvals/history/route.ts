@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
 import Approval from '@/models/Approval';
 
@@ -36,8 +36,6 @@ export async function GET(req: Request) {
         id: approval._id,
         confirmationNumber: approval.confirmationNumber,
         iidNumber: approval.iidNumber,
-        productType: approval.productType,
-        creditUsed: approval.creditUsed,
         status: approval.status,
         createdAt: approval.createdAt,
       })),
