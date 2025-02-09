@@ -112,7 +112,13 @@ export function IIDForm() {
 
             if (!saveResponse.ok) {
               console.error('Kayıt hatası:', saveData);
-              throw new Error(saveData.error || 'Onay kaydı başarısız oldu');
+              setResult({
+                status: 'error',
+                data: apiResponse,
+                message: saveData.error || 'Onay kaydı başarısız oldu'
+              });
+              toast.error(saveData.error || 'Onay kaydı başarısız oldu');
+              return;
             }
 
             // Başarılı kayıt durumu
@@ -129,14 +135,12 @@ export function IIDForm() {
             }, 2000);
           } catch (error) {
             console.error('Onay kaydı hatası:', error);
-            toast.error('Onay kaydedilirken bir hata oluştu');
-            
-            // Kayıt başarısız olsa da onay numarasını göster
             setResult({
-              status: 'success',
+              status: 'error',
               data: apiResponse,
-              message: 'Onay numarası alındı!'
+              message: 'Onay kaydedilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
             });
+            toast.error('Onay kaydedilirken bir hata oluştu');
           }
         }
       }

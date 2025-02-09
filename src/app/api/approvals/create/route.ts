@@ -90,43 +90,78 @@ export async function POST(req: Request) {
 
     console.log('Yeni onay kaydı oluşturuluyor...');
     
-    // Yeni onay kaydı oluştur
-    const approval = await Approval.create({
-      userId: session.user.id,
-      iidNumber,
-      confirmationNumber,
-      status: 'success',
-    });
+    let approval;
+    try {
+      // Yeni onay kaydı oluştur
+      approval = await Approval.create({
+        userId: session.user.id,
+        iidNumber,
+        confirmationNumber,
+        status: 'success',
+      });
 
-    console.log('Onay kaydı oluşturuldu:', {
-      id: approval._id,
-      userId: approval.userId,
-      iidNumber: approval.iidNumber,
-      confirmationNumber: approval.confirmationNumber,
-    });
-
-    // Kullanıcının kredisini düş
-    const updatedUser = await User.findByIdAndUpdate(
-      session.user.id,
-      { $inc: { credit: -1 } },
-      { new: true }
-    );
-
-    console.log('Kullanıcı kredisi güncellendi:', {
-      id: updatedUser?._id,
-      newCredit: updatedUser?.credit
-    });
-
-    return NextResponse.json({
-      message: 'Onay kaydı başarıyla oluşturuldu.',
-      approval: {
+      console.log('Onay kaydı oluşturuldu:', {
         id: approval._id,
-        confirmationNumber: approval.confirmationNumber,
+        userId: approval.userId,
         iidNumber: approval.iidNumber,
-        status: approval.status,
-        createdAt: approval.createdAt,
-      },
-    });
+        confirmationNumber: approval.confirmationNumber,
+      });
+    } catch (dbError) {
+      console.error('Veritabanı kayıt hatası:', dbError);
+      return NextResponse.json(
+        { error: 'Onay kaydedilirken veritabanı hatası oluştu. Lütfen daha sonra tekrar deneyin.' },
+        { status: 500 }
+      );
+    }
+
+    try {
+      // Kullanıcının kredisini düş
+      const updatedUser = await User.findByIdAndUpdate(
+        session.user.id,
+        { $inc: { credit: -1 } },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        console.error('Kullanıcı güncellenemedi:', session.user.id);
+        // Onay kaydını geri al
+        await Approval.findByIdAndDelete(approval._id);
+        return NextResponse.json(
+          { error: 'Kullanıcı kredisi güncellenirken hata oluştu.' },
+          { status: 500 }
+        );
+      }
+
+      console.log('Kullanıcı kredisi güncellendi:', {
+        id: updatedUser._id,
+        newCredit: updatedUser.credit
+      });
+
+      return NextResponse.json({
+        message: 'Onay kaydı başarıyla oluşturuldu.',
+        approval: {
+          id: approval._id,
+          confirmationNumber: approval.confirmationNumber,
+          iidNumber: approval.iidNumber,
+          status: approval.status,
+          createdAt: approval.createdAt,
+        },
+      });
+    } catch (error) {
+      console.error('Onay kayıt hatası:', error);
+      
+      if (error instanceof Error) {
+        return NextResponse.json(
+          { error: `Onay kaydedilirken bir hata oluştu: ${error.message}` },
+          { status: 500 }
+        );
+      }
+      
+      return NextResponse.json(
+        { error: 'Onay kaydedilirken bir hata oluştu.' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error('Onay kayıt hatası:', error);
     
