@@ -6,30 +6,49 @@ import Approval from '@/models/Approval';
 import User from '@/models/User';
 
 export async function POST(req: Request) {
+  console.log('Onay kaydetme isteği alındı');
+  
   try {
     const session = await getServerSession(authOptions);
     
     if (!session) {
+      console.log('Oturum bulunamadı');
       return NextResponse.json(
         { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
         { status: 401 }
       );
     }
 
+    console.log('Kullanıcı oturumu:', {
+      userId: session.user.id,
+      email: session.user.email
+    });
+
     const { iidNumber, confirmationNumber } = await req.json();
+    console.log('İstek verileri:', { iidNumber, confirmationNumber });
 
     if (!iidNumber || !confirmationNumber) {
+      console.log('Eksik veri');
       return NextResponse.json(
         { error: 'IID numarası ve onay numarası gereklidir.' },
         { status: 400 }
       );
     }
 
+    console.log('Veritabanı bağlantısı başlatılıyor...');
     await dbConnect();
+    console.log('Veritabanı bağlantısı başarılı');
 
     // Kullanıcının kredisini kontrol et
     const user = await User.findById(session.user.id);
+    console.log('Kullanıcı bilgileri:', {
+      id: user?._id,
+      credit: user?.credit,
+      found: !!user
+    });
+
     if (!user) {
+      console.log('Kullanıcı bulunamadı');
       return NextResponse.json(
         { error: 'Kullanıcı bulunamadı.' },
         { status: 404 }
@@ -37,6 +56,7 @@ export async function POST(req: Request) {
     }
 
     if (user.credit < 1) {
+      console.log('Yetersiz kredi');
       return NextResponse.json(
         { error: 'Yetersiz kredi. Lütfen kredi yükleyin.' },
         { status: 400 }
@@ -50,7 +70,7 @@ export async function POST(req: Request) {
     });
 
     if (existingApproval) {
-      console.log('Bu IID numarası için önceki kayıt bulundu:', {
+      console.log('Mevcut onay kaydı bulundu:', {
         id: existingApproval._id,
         userId: existingApproval.userId,
         iidNumber: existingApproval.iidNumber,
@@ -68,6 +88,8 @@ export async function POST(req: Request) {
       });
     }
 
+    console.log('Yeni onay kaydı oluşturuluyor...');
+    
     // Yeni onay kaydı oluştur
     const approval = await Approval.create({
       userId: session.user.id,
@@ -76,18 +98,23 @@ export async function POST(req: Request) {
       status: 'success',
     });
 
-    // Kullanıcının kredisini düş
-    await User.findByIdAndUpdate(session.user.id, {
-      $inc: { credit: -1 }
-    });
-
-    console.log('Yeni onay kaydı oluşturuldu:', {
+    console.log('Onay kaydı oluşturuldu:', {
       id: approval._id,
       userId: approval.userId,
       iidNumber: approval.iidNumber,
       confirmationNumber: approval.confirmationNumber,
-      status: approval.status,
-      createdAt: approval.createdAt,
+    });
+
+    // Kullanıcının kredisini düş
+    const updatedUser = await User.findByIdAndUpdate(
+      session.user.id,
+      { $inc: { credit: -1 } },
+      { new: true }
+    );
+
+    console.log('Kullanıcı kredisi güncellendi:', {
+      id: updatedUser?._id,
+      newCredit: updatedUser?.credit
     });
 
     return NextResponse.json({
