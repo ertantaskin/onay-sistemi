@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
 import Approval from '@/models/Approval';
+import User from '@/models/User';
 
 export async function POST(req: Request) {
   try {
@@ -25,6 +26,22 @@ export async function POST(req: Request) {
     }
 
     await dbConnect();
+
+    // Kullanıcının kredisini kontrol et
+    const user = await User.findById(session.user.id);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Kullanıcı bulunamadı.' },
+        { status: 404 }
+      );
+    }
+
+    if (user.credit < 1) {
+      return NextResponse.json(
+        { error: 'Yetersiz kredi. Lütfen kredi yükleyin.' },
+        { status: 400 }
+      );
+    }
 
     // Aynı IID numarası için önceki kaydı kontrol et
     const existingApproval = await Approval.findOne({
@@ -57,7 +74,11 @@ export async function POST(req: Request) {
       iidNumber,
       confirmationNumber,
       status: 'success',
-      createdAt: new Date(),
+    });
+
+    // Kullanıcının kredisini düş
+    await User.findByIdAndUpdate(session.user.id, {
+      $inc: { credit: -1 }
     });
 
     console.log('Yeni onay kaydı oluşturuldu:', {

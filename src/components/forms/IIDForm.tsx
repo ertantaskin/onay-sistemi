@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import axios, { AxiosError } from 'axios';
 import { useTheme } from '@/app/ThemeContext';
+import { useRouter } from 'next/navigation';
 
 interface ApiResponse {
   short_result: string;
@@ -29,6 +30,7 @@ export function IIDForm() {
     data?: ApiResponse;
     message: string;
   } | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, 9);
@@ -109,6 +111,7 @@ export function IIDForm() {
             const saveData = await saveResponse.json();
 
             if (!saveResponse.ok) {
+              console.error('Kayıt hatası:', saveData);
               throw new Error(saveData.error || 'Onay kaydı başarısız oldu');
             }
 
@@ -119,6 +122,11 @@ export function IIDForm() {
               message: 'Onay numarası başarıyla alındı ve kaydedildi!'
             });
             toast.success('Onay numarası başarıyla alındı ve kaydedildi!');
+
+            // Başarılı kayıt sonrası 2 saniye bekleyip geçmiş sayfasına yönlendir
+            setTimeout(() => {
+              router.push('/dashboard/approvals/history');
+            }, 2000);
           } catch (error) {
             console.error('Onay kaydı hatası:', error);
             toast.error('Onay kaydedilirken bir hata oluştu');
@@ -127,7 +135,7 @@ export function IIDForm() {
             setResult({
               status: 'success',
               data: apiResponse,
-              message: 'Onay numarası alındı fakat kayıt edilemedi!'
+              message: 'Onay numarası alındı!'
             });
           }
         }
