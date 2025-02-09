@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     const existingApproval = await Approval.findOne({
       userId: session.user.id,
       iidNumber: iidNumber,
-    });
+    }).lean();
 
     if (existingApproval) {
       console.log('Bu IID numarası için önceki kayıt bulundu:', {
@@ -57,6 +57,7 @@ export async function POST(req: Request) {
       iidNumber,
       confirmationNumber,
       status: 'success',
+      createdAt: new Date(),
     });
 
     console.log('Yeni onay kaydı oluşturuldu:', {

@@ -93,7 +93,14 @@ export function IIDForm() {
           });
           toast.error('Geçersiz IID numarası');
         } else {
-          // Önce veritabanına kaydet
+          // Önce onay numarasını göster
+          setResult({
+            status: 'success',
+            data: apiResponse,
+            message: 'Onay numarası başarıyla alındı!'
+          });
+
+          // Sonra veritabanına kaydet
           try {
             const saveResponse = await fetch('/api/approvals/create', {
               method: 'POST',
@@ -112,23 +119,11 @@ export function IIDForm() {
               throw new Error(saveData.error || 'Onay kaydı başarısız oldu');
             }
 
-            // Başarılı kayıt durumu
-            setResult({
-              status: 'success',
-              data: apiResponse,
-              message: 'Onay numarası başarıyla alındı ve kaydedildi!'
-            });
-            toast.success('Onay numarası başarıyla alındı ve kaydedildi!');
+            console.log('Onay kaydı başarılı:', saveData);
+            toast.success('Onay numarası başarıyla kaydedildi!');
           } catch (error) {
             console.error('Onay kaydı hatası:', error);
-            toast.error('Onay kaydedilirken bir hata oluştu');
-            
-            // Kayıt başarısız olsa da onay numarasını göster
-            setResult({
-              status: 'error',
-              data: apiResponse,
-              message: 'Onay numarası alındı fakat kayıt edilemedi!'
-            });
+            toast.error('Onay numarası alındı fakat kayıt edilemedi');
           }
         }
       }
@@ -224,99 +219,59 @@ export function IIDForm() {
       </form>
 
       {result && (
-        <div className={`mt-8 overflow-hidden ${
+        <div className={`mt-6 p-4 rounded-lg ${
           result.status === 'success'
-            ? theme === 'dark' ? 'bg-green-900/20' : 'bg-green-50'
-            : theme === 'dark' ? 'bg-red-900/20' : 'bg-red-50'
-        } rounded-xl`}>
-          <div className={`p-4 ${
-            result.status === 'success'
-              ? theme === 'dark' ? 'bg-green-500/10' : 'bg-green-100/50'
-              : theme === 'dark' ? 'bg-red-500/10' : 'bg-red-100/50'
-          }`}>
-            <div className="flex items-center">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+            ? theme === 'dark' ? 'bg-green-900/20 border border-green-700' : 'bg-green-50 border border-green-200'
+            : theme === 'dark' ? 'bg-red-900/20 border border-red-700' : 'bg-red-50 border border-red-200'
+        }`}>
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              {result.status === 'success' ? (
+                <svg className="h-6 w-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="h-6 w-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
+            </div>
+            <div className="ml-3 w-0 flex-1">
+              <p className={`text-sm font-medium ${
                 result.status === 'success'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-red-500 text-white'
+                  ? theme === 'dark' ? 'text-green-200' : 'text-green-800'
+                  : theme === 'dark' ? 'text-red-200' : 'text-red-800'
               }`}>
-                {result.status === 'success' ? (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                )}
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold">
-                  {result.status === 'success' ? 'İşlem Başarılı' : 'İşlem Başarısız'}
-                </h3>
-                <p className={`text-sm ${
-                  result.status === 'success'
-                    ? theme === 'dark' ? 'text-green-300' : 'text-green-600'
-                    : theme === 'dark' ? 'text-red-300' : 'text-red-600'
-                }`}>
-                  {result.message}
-                </p>
-              </div>
+                {result.message}
+              </p>
+              {result.status === 'success' && result.data && (
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <p className={`text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Onay Numarası:
+                    </p>
+                    <div className="mt-1 flex items-center">
+                      <code className={`text-lg font-mono font-bold ${
+                        theme === 'dark' ? 'text-green-300' : 'text-green-700'
+                      }`}>
+                        {result.data.confirmation_id_with_dash}
+                      </code>
+                      <button
+                        onClick={() => handleCopy(result.data.confirmation_id_with_dash)}
+                        className={`ml-2 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}
+                      >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          
-          {result.status === 'success' && result.data?.confirmation_id_with_dash && (
-            <div className="p-6">
-              <div className={`p-4 rounded-lg ${
-                theme === 'dark' ? 'bg-gray-700/50' : 'bg-white'
-              } border border-opacity-10 shadow-sm`}>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm font-medium opacity-75 mb-1">Onay Numarası</p>
-                    <p className="font-mono text-lg tracking-wide">
-                      {result.data.confirmation_id_with_dash}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => result.data && handleCopy(result.data.confirmation_id_with_dash)}
-                    className={`p-3 rounded-lg hover:bg-opacity-80 transition-all duration-200 ${
-                      theme === 'dark' 
-                        ? 'bg-gray-600 hover:bg-gray-500' 
-                        : 'bg-gray-100 hover:bg-gray-200'
-                    }`}
-                    title="Kopyala"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {result.status === 'error' && (
-            <div className="p-6">
-              <div className={`p-4 rounded-lg ${
-                theme === 'dark' ? 'bg-gray-700/50' : 'bg-white'
-              } border border-opacity-10 shadow-sm`}>
-                <div className="space-y-4">
-                  <p className="text-base">
-                    {result.message}
-                  </p>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium opacity-75">Kontrol listesi:</p>
-                    <ul className="text-sm space-y-1 list-disc list-inside opacity-75">
-                      <li>Tüm kutucukların doğru doldurulduğundan emin olun</li>
-                      <li>Her kutucukta 7 rakam olmalıdır</li>
-                      <li>IID numarasını kurulum ekranından doğru kopyaladığınızdan emin olun</li>
-                      <li>Microsoft ürününüzün lisansının aktif olduğundan emin olun</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
