@@ -71,16 +71,16 @@ export function RecentApprovals() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <tr>
-                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                   Tarih
                 </th>
-                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider hidden sm:table-cell`}>
                   Onay Numarası
                 </th>
-                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                   Durum
                 </th>
-                <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                   İşlem
                 </th>
               </tr>
@@ -88,21 +88,21 @@ export function RecentApprovals() {
             <tbody className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} divide-y divide-gray-200 dark:divide-gray-700`}>
               {recentApprovals.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className={`px-6 py-4 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <td colSpan={4} className={`px-3 sm:px-6 py-4 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                     Henüz onay işlemi bulunmuyor.
                   </td>
                 </tr>
               ) : (
                 recentApprovals.map((approval) => (
                   <tr key={approval.id} className={`${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
                       {formatDate(approval.createdAt)}
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm font-mono hidden sm:table-cell ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
                       {approval.confirmationNumber}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         approval.status === 'completed' || approval.status === 'success'
                           ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                           : approval.status === 'pending'
@@ -114,19 +114,20 @@ export function RecentApprovals() {
                           : 'Başarısız'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                       <button
                         onClick={() => handleCopy(approval.confirmationNumber)}
-                        className={`p-1.5 rounded-lg transition-all duration-200 ${
+                        className={`inline-flex items-center p-1.5 rounded-lg transition-all duration-200 ${
                           theme === 'dark'
                             ? 'text-blue-400 hover:bg-gray-700 hover:text-blue-300'
                             : 'text-blue-600 hover:bg-gray-100 hover:text-blue-700'
                         }`}
                         title="Kopyala"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                         </svg>
+                        <span className="sr-only">Kopyala</span>
                       </button>
                     </td>
                   </tr>
