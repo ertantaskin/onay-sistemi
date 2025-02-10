@@ -45,17 +45,21 @@ export default function LoginPage() {
     <div className={`min-h-[calc(100vh-96px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="max-w-md w-full">
         <div className="text-center relative">
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl transform -rotate-6"></div>
-          <div className="relative p-3 rounded-xl bg-white/10 backdrop-blur-sm">
-            <svg className="w-14 h-14 mx-auto text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-24 bg-gradient-to-br from-blue-500/40 to-blue-600/40 rounded-[2rem] shadow-xl transform -rotate-12 blur-xl"></div>
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-[2rem] shadow-xl transform rotate-12 opacity-40 blur-xl"></div>
+          <div className="relative">
+            <div className="relative p-4 rounded-2xl bg-gradient-to-br from-blue-600/10 to-blue-400/10 backdrop-blur-xl border border-white/10 shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-blue-400/20 rounded-2xl blur opacity-50"></div>
+              <svg className="relative w-16 h-16 mx-auto text-blue-500 transform hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
           </div>
-          <h2 className={`mt-6 text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${
+          <h2 className={`mt-8 text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${
             theme === 'dark' 
               ? 'from-blue-400 to-blue-600' 
               : 'from-blue-600 to-blue-800'
-          }`}>
+          } drop-shadow-sm`}>
             Hesabınıza Giriş Yapın
           </h2>
           <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>

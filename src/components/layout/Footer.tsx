@@ -32,20 +32,20 @@ export function Footer() {
       <div className="mx-auto max-w-7xl overflow-hidden px-6 py-12 sm:py-16 lg:px-8">
         <div className="flex justify-center">
           <div className="relative group">
-            <div className="absolute -inset-1 rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 opacity-25 group-hover:opacity-50 blur transition duration-200"></div>
-            <div className={`relative flex items-center space-x-3 px-4 py-3 rounded-lg ${
-              theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-            } ring-1 ring-gray-900/5 shadow-xl`}>
-              <div className="p-2">
-                <svg className={`w-6 h-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            <div className="absolute -inset-2 rounded-2xl bg-gradient-to-br from-blue-600/20 to-blue-400/20 group-hover:from-blue-600/30 group-hover:to-blue-400/30 blur-xl transition-all duration-300"></div>
+            <div className={`relative flex items-center space-x-3 px-6 py-4 rounded-xl ${
+              theme === 'dark' ? 'bg-gray-800/80' : 'bg-white/80'
+            } backdrop-blur-sm ring-1 ring-gray-900/5 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] transition-all duration-300`}>
+              <div className="relative p-2 rounded-lg bg-gradient-to-br from-blue-500/10 to-blue-400/10">
+                <svg className={`w-8 h-8 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} transform group-hover:rotate-12 transition-transform duration-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <span className={`text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r ${
+              <span className={`text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${
                 theme === 'dark' 
                   ? 'from-blue-400 to-blue-600' 
                   : 'from-blue-600 to-blue-800'
-              }`}>
+              } drop-shadow-sm`}>
                 Microsoft Onay
               </span>
             </div>
