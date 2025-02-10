@@ -74,7 +74,7 @@ export default function AddCreditPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <CreditInfo />
         
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-8">
+        <div id="add-credit-section" className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-8">
           <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
             Kredi Yükle
           </h1>
