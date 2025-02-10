@@ -247,65 +247,76 @@ export function IIDForm() {
       </form>
 
       {result && (
-        <div className={`mt-8 overflow-hidden ${
+        <div className={`mt-8 overflow-hidden rounded-2xl transition-all duration-300 transform ${
           result.status === 'success'
-            ? theme === 'dark' ? 'bg-green-900/20' : 'bg-green-50'
-            : theme === 'dark' ? 'bg-red-900/20' : 'bg-red-50'
-        } rounded-xl`}>
-          <div className={`p-4 ${
+            ? theme === 'dark' ? 'bg-gradient-to-br from-green-900/30 to-green-800/20' : 'bg-gradient-to-br from-green-50 to-emerald-50'
+            : theme === 'dark' ? 'bg-gradient-to-br from-red-900/30 to-red-800/20' : 'bg-gradient-to-br from-red-50 to-rose-50'
+        } shadow-lg backdrop-blur-sm`}>
+          <div className={`p-6 ${
             result.status === 'success'
-              ? theme === 'dark' ? 'bg-green-500/10' : 'bg-green-100/50'
-              : theme === 'dark' ? 'bg-red-500/10' : 'bg-red-100/50'
+              ? theme === 'dark' ? 'bg-green-500/5' : 'bg-green-100/30'
+              : theme === 'dark' ? 'bg-red-500/5' : 'bg-red-100/30'
           }`}>
-            <div className="flex items-center">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+            <div className="flex items-start space-x-4">
+              <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${
                 result.status === 'success'
-                  ? theme === 'dark' ? 'bg-green-500/20' : 'bg-green-100'
-                  : theme === 'dark' ? 'bg-red-500/20' : 'bg-red-100'
+                  ? theme === 'dark' ? 'bg-green-500/20 ring-2 ring-green-500/40' : 'bg-green-100 ring-2 ring-green-500/30'
+                  : theme === 'dark' ? 'bg-red-500/20 ring-2 ring-red-500/40' : 'bg-red-100 ring-2 ring-red-500/30'
               }`}>
                 {result.status === 'success' ? (
                   <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
                   </svg>
                 ) : (
                   <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 )}
               </div>
-              <div className="ml-4">
-                <h3 className={`text-lg font-medium ${
+              <div className="flex-1 min-w-0">
+                <h3 className={`text-xl font-semibold ${
                   result.status === 'success'
                     ? theme === 'dark' ? 'text-green-400' : 'text-green-800'
                     : theme === 'dark' ? 'text-red-400' : 'text-red-800'
                 }`}>
-                  {result.status === 'success' ? 'Başarılı!' : 'Hata!'}
+                  {result.status === 'success' ? 'İşlem Başarılı!' : 'Hata!'}
                 </h3>
-                <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                <p className={`mt-2 text-base ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                   {result.message}
                 </p>
               </div>
             </div>
 
             {result.showConfirmation && result.data?.confirmation_id_with_dash && (
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Onay Numarası
-                    </p>
-                    <p className="mt-1 text-lg font-mono tracking-wider text-gray-900 dark:text-white">
-                      {result.data.confirmation_id_with_dash}
-                    </p>
+              <div className="mt-6">
+                <div className={`p-4 rounded-xl ${
+                  theme === 'dark' 
+                    ? 'bg-gray-800/50 ring-1 ring-green-500/20' 
+                    : 'bg-white/80 ring-1 ring-green-500/30'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Onay Numaranız
+                      </p>
+                      <p className={`mt-1 text-xl font-mono tracking-wider ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        {result.data.confirmation_id_with_dash}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleCopy(result.data.confirmation_id_with_dash)}
+                      className={`p-2.5 rounded-lg transition-all duration-200 ${
+                        theme === 'dark'
+                          ? 'bg-gray-700/50 text-blue-400 hover:bg-gray-700 hover:text-blue-300'
+                          : 'bg-gray-50 text-blue-600 hover:bg-gray-100 hover:text-blue-700'
+                      }`}
+                      title="Kopyala"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                      </svg>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleCopy(result.data.confirmation_id_with_dash)}
-                    className="p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                    </svg>
-                  </button>
                 </div>
               </div>
             )}
