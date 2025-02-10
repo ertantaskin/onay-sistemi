@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
@@ -14,10 +13,18 @@ export async function GET() {
         { status: 401 }
       );
     }
-
-    await dbConnect();
     
-    const user = await User.findById(session.user.id).select('credit email name');
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        credit: true,
+        role: true,
+        createdAt: true
+      }
+    });
 
     if (!user) {
       return NextResponse.json(
@@ -26,14 +33,7 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        credit: user.credit
-      }
-    });
+    return NextResponse.json({ user });
   } catch (error) {
     console.error('Kullanıcı bilgileri hatası:', error);
     return NextResponse.json(

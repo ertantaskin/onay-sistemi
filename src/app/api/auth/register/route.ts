@@ -1,57 +1,72 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
+import { hash } from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
-    const { email, password, name } = await req.json();
+    const { name, email, password } = await req.json();
 
-    // Gerekli alanları kontrol et
-    if (!email || !password || !name) {
+    // Validasyon kontrolleri
+    if (!name || !email || !password) {
       return NextResponse.json(
-        { error: 'Tüm alanların doldurulması zorunludur.' },
+        { error: 'Tüm alanları doldurun' },
         { status: 400 }
       );
     }
 
-    // Veritabanına bağlan
-    await dbConnect();
-
-    // Email kullanımda mı kontrol et
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    if (password.length < 6) {
       return NextResponse.json(
-        { error: 'Bu email adresi zaten kullanımda.' },
+        { error: 'Şifre en az 6 karakter olmalıdır' },
         { status: 400 }
       );
     }
 
-    // Yeni kullanıcı oluştur
-    const user = await User.create({
-      email,
-      password, // Model içinde hash'lenecek
-      name,
-      role: 'user',
-      credit: 0,
-      isActive: true,
+    // Email formatı kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Geçerli bir email adresi girin' },
+        { status: 400 }
+      );
+    }
+
+    // Email kullanımda mı kontrolü
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
     });
 
-    return NextResponse.json(
-      {
-        message: 'Kullanıcı başarıyla oluşturuldu.',
-        user: {
-          id: user._id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
-      },
-      { status: 201 }
-    );
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Bu email adresi zaten kullanımda' },
+        { status: 400 }
+      );
+    }
+
+    // Şifreyi hashle
+    const hashedPassword = await hash(password, 12);
+
+    // Yeni kullanıcı oluştur
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        credit: 0,
+        role: 'user'
+      }
+    });
+
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      }
+    });
   } catch (error) {
     console.error('Kayıt hatası:', error);
     return NextResponse.json(
-      { error: 'Kayıt işlemi sırasında bir hata oluştu.' },
+      { error: 'Kayıt sırasında bir hata oluştu' },
       { status: 500 }
     );
   }

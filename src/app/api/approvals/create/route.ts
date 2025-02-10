@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/dbConnect';
-import Approval from '@/models/Approval';
-import User from '@/models/User';
-import mongoose from 'mongoose';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
@@ -26,97 +23,88 @@ export async function POST(req: Request) {
       );
     }
 
-    // MongoDB bağlantısını kur
-    await dbConnect();
+    // Kullanıcıyı bul ve kredisini kontrol et
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
 
-    // MongoDB oturumunu başlat
-    const session_db = await mongoose.startSession();
-    session_db.startTransaction();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Kullanıcı bulunamadı.' },
+        { status: 404 }
+      );
+    }
 
-    try {
-      // Kullanıcıyı bul ve kredisini kontrol et
-      const user = await User.findById(session.user.id).session(session_db);
+    if (user.credit < 1) {
+      return NextResponse.json(
+        { error: 'Yetersiz kredi. Lütfen kredi yükleyin.' },
+        { status: 402 }
+      );
+    }
 
-      if (!user) {
-        await session_db.abortTransaction();
-        return NextResponse.json(
-          { error: 'Kullanıcı bulunamadı.' },
-          { status: 404 }
-        );
-      }
-
-      if (user.credit < 1) {
-        await session_db.abortTransaction();
-        return NextResponse.json(
-          { error: 'Yetersiz kredi. Lütfen kredi yükleyin.' },
-          { status: 402 }
-        );
-      }
-
-      // Aynı IID numarası için önceki kaydı kontrol et
-      const existingApproval = await Approval.findOne({
+    // Aynı IID numarası için önceki kaydı kontrol et
+    const existingApproval = await prisma.approval.findFirst({
+      where: {
         userId: session.user.id,
         iidNumber: iidNumber,
-      }).session(session_db);
-
-      if (existingApproval) {
-        await session_db.abortTransaction();
-        return NextResponse.json({
-          message: 'Bu IID numarası için daha önce onay alınmış.',
-          approval: {
-            id: existingApproval._id,
-            confirmationNumber: existingApproval.confirmationNumber,
-            iidNumber: existingApproval.iidNumber,
-            status: existingApproval.status,
-            createdAt: existingApproval.createdAt,
-          },
-        });
       }
+    });
 
-      // Yeni onay kaydı oluştur
-      const approval = await Approval.create([{
-        userId: session.user.id,
-        iidNumber,
-        confirmationNumber,
-        status: 'success',
-      }], { session: session_db });
-
-      // Kullanıcının kredisini düş
-      await User.findByIdAndUpdate(
-        session.user.id,
-        { $inc: { credit: -1 } },
-        { new: true, session: session_db }
-      );
-
-      // İşlemi onayla
-      await session_db.commitTransaction();
-
+    if (existingApproval) {
       return NextResponse.json({
-        message: 'Onay kaydı başarıyla oluşturuldu.',
+        message: 'Bu IID numarası için daha önce onay alınmış.',
         approval: {
-          id: approval[0]._id,
-          confirmationNumber: approval[0].confirmationNumber,
-          iidNumber: approval[0].iidNumber,
-          status: approval[0].status,
-          createdAt: approval[0].createdAt,
+          id: existingApproval.id,
+          confirmationNumber: existingApproval.confirmationNumber,
+          iidNumber: existingApproval.iidNumber,
+          status: existingApproval.status,
+          createdAt: existingApproval.createdAt,
         },
       });
-    } catch (error) {
-      await session_db.abortTransaction();
-      throw error;
-    } finally {
-      session_db.endSession();
     }
+
+    // Transaction başlat
+    const result = await prisma.$transaction(async (prisma) => {
+      // Yeni onay kaydı oluştur
+      const approval = await prisma.approval.create({
+        data: {
+          userId: session.user.id,
+          iidNumber,
+          confirmationNumber,
+          status: 'success',
+        }
+      });
+
+      // Kredi işlemi kaydı oluştur
+      await prisma.creditTransaction.create({
+        data: {
+          userId: session.user.id,
+          type: 'usage',
+          amount: -1,
+        }
+      });
+
+      // Kullanıcının kredisini düş
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { credit: { decrement: 1 } }
+      });
+
+      return approval;
+    });
+
+    return NextResponse.json({
+      message: 'Onay kaydı başarıyla oluşturuldu.',
+      approval: {
+        id: result.id,
+        confirmationNumber: result.confirmationNumber,
+        iidNumber: result.iidNumber,
+        status: result.status,
+        createdAt: result.createdAt,
+      },
+    });
   } catch (error) {
     console.error('Onay kayıt hatası:', error);
-    
-    if (error instanceof mongoose.Error) {
-      return NextResponse.json(
-        { error: 'Veritabanı işlemi sırasında bir hata oluştu.' },
-        { status: 500 }
-      );
-    }
-    
     return NextResponse.json(
       { error: 'Onay kaydedilirken bir hata oluştu.' },
       { status: 500 }

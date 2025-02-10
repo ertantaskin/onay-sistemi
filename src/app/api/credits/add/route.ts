@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
-import CreditTransaction from '@/models/CreditTransaction';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
@@ -16,49 +14,51 @@ export async function POST(req: Request) {
       );
     }
 
-    const { amount, paymentMethod } = await req.json();
+    const { amount } = await req.json();
 
-    if (!amount || amount <= 0) {
+    if (!amount || amount < 1) {
       return NextResponse.json(
-        { error: 'Geçerli bir kredi miktarı giriniz.' },
+        { error: 'Geçerli bir kredi miktarı girin.' },
         { status: 400 }
       );
     }
 
-    await dbConnect();
+    // Transaction başlat
+    const result = await prisma.$transaction(async (prisma) => {
+      // Kredi işlemi kaydı oluştur
+      const transaction = await prisma.creditTransaction.create({
+        data: {
+          userId: session.user.id,
+          type: 'deposit',
+          amount: amount,
+        }
+      });
 
-    // Kredi işlemini oluştur
-    const transaction = await CreditTransaction.create({
-      userId: session.user.id,
-      amount,
-      type: 'deposit',
-      status: 'completed',
-      paymentMethod,
-      description: 'Kredi yükleme',
+      // Kullanıcının kredisini artır
+      const user = await prisma.user.update({
+        where: { id: session.user.id },
+        data: { credit: { increment: amount } }
+      });
+
+      return { transaction, user };
     });
-
-    // Kullanıcının kredisini güncelle
-    const user = await User.findByIdAndUpdate(
-      session.user.id,
-      { $inc: { credit: amount } },
-      { new: true }
-    );
 
     return NextResponse.json({
       message: 'Kredi başarıyla yüklendi.',
       transaction: {
-        id: transaction._id,
-        amount,
-        type: transaction.type,
-        status: transaction.status,
-        createdAt: transaction.createdAt,
+        id: result.transaction.id,
+        amount: result.transaction.amount,
+        type: result.transaction.type,
+        createdAt: result.transaction.createdAt
       },
-      newBalance: user.credit,
+      user: {
+        credit: result.user.credit
+      }
     });
   } catch (error) {
     console.error('Kredi yükleme hatası:', error);
     return NextResponse.json(
-      { error: 'Kredi yükleme işlemi sırasında bir hata oluştu.' },
+      { error: 'Kredi yüklenirken bir hata oluştu.' },
       { status: 500 }
     );
   }

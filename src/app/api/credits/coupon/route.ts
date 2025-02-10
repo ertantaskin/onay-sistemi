@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
-import Coupon from '@/models/Coupon';
-import CreditTransaction from '@/models/CreditTransaction';
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+
+// Kupon kodları ve karşılık gelen kredi miktarları
+const COUPON_CODES = {
+  'WELCOME10': 10,
+  'BONUS20': 20,
+  'SPECIAL50': 50
+};
 
 export async function POST(req: Request) {
   try {
@@ -26,71 +30,52 @@ export async function POST(req: Request) {
       );
     }
 
-    await dbConnect();
-
-    // Kuponu bul
-    const coupon = await Coupon.findOne({ code, isActive: true });
-
-    if (!coupon) {
+    // Kupon kodunu kontrol et
+    const creditAmount = COUPON_CODES[code as keyof typeof COUPON_CODES];
+    
+    if (!creditAmount) {
       return NextResponse.json(
-        { error: 'Geçersiz veya kullanılmış kupon kodu.' },
+        { error: 'Geçersiz kupon kodu.' },
         { status: 400 }
       );
     }
 
-    // Kuponun süresinin dolup dolmadığını kontrol et
-    if (coupon.expiresAt && new Date() > coupon.expiresAt) {
-      return NextResponse.json(
-        { error: 'Bu kuponun süresi dolmuş.' },
-        { status: 400 }
-      );
-    }
+    // Transaction başlat
+    const result = await prisma.$transaction(async (prisma) => {
+      // Kredi işlemi kaydı oluştur
+      const transaction = await prisma.creditTransaction.create({
+        data: {
+          userId: session.user.id,
+          type: 'coupon',
+          amount: creditAmount,
+        }
+      });
 
-    // Kullanım limitini kontrol et
-    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-      return NextResponse.json(
-        { error: 'Bu kupon maksimum kullanım limitine ulaşmış.' },
-        { status: 400 }
-      );
-    }
+      // Kullanıcının kredisini artır
+      const user = await prisma.user.update({
+        where: { id: session.user.id },
+        data: { credit: { increment: creditAmount } }
+      });
 
-    // Kredi işlemini oluştur
-    const transaction = await CreditTransaction.create({
-      userId: session.user.id,
-      amount: coupon.creditAmount,
-      type: 'coupon',
-      status: 'completed',
-      couponCode: code,
-      description: 'Kupon ile kredi yükleme',
-    });
-
-    // Kullanıcının kredisini güncelle
-    const user = await User.findByIdAndUpdate(
-      session.user.id,
-      { $inc: { credit: coupon.creditAmount } },
-      { new: true }
-    );
-
-    // Kuponun kullanım sayısını artır
-    await Coupon.findByIdAndUpdate(coupon._id, {
-      $inc: { usedCount: 1 },
+      return { transaction, user };
     });
 
     return NextResponse.json({
       message: 'Kupon başarıyla kullanıldı.',
       transaction: {
-        id: transaction._id,
-        amount: coupon.creditAmount,
-        type: transaction.type,
-        status: transaction.status,
-        createdAt: transaction.createdAt,
+        id: result.transaction.id,
+        amount: result.transaction.amount,
+        type: result.transaction.type,
+        createdAt: result.transaction.createdAt
       },
-      newBalance: user.credit,
+      user: {
+        credit: result.user.credit
+      }
     });
   } catch (error) {
-    console.error('Kupon kullanma hatası:', error);
+    console.error('Kupon kullanım hatası:', error);
     return NextResponse.json(
-      { error: 'Kupon kullanma işlemi sırasında bir hata oluştu.' },
+      { error: 'Kupon kullanılırken bir hata oluştu.' },
       { status: 500 }
     );
   }
