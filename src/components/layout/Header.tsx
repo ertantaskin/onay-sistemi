@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect } from 'react';
+import { Fragment, useEffect, useState, useRef } from 'react';
 import { useTheme } from '@/app/ThemeContext';
 import { Popover, Transition } from '@headlessui/react';
 import {
@@ -24,6 +24,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useCreditStore } from '@/store/creditStore';
+import { useRouter } from 'next/navigation';
 
 const products = [
   {
@@ -75,6 +76,11 @@ export function Header() {
   const { theme, toggleTheme } = useTheme();
   const { data: session } = useSession();
   const { credit, updateCredit } = useCreditStore();
+  const router = useRouter();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (session) {
@@ -82,8 +88,24 @@ export function Header() {
     }
   }, [session, updateCredit]);
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleSignOut = () => {
-    signOut({ callbackUrl: '/' });
+    signOut({ callbackUrl: '/auth/login' });
   };
 
   return (
@@ -181,82 +203,70 @@ export function Header() {
             <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
               <button
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-all duration-200 ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                className={`p-2 rounded-lg transition-colors ${
+                  theme === 'dark'
+                    ? 'text-yellow-400 hover:bg-gray-700'
+                    : 'text-gray-500 hover:bg-gray-100'
                 }`}
-                aria-label={theme === 'dark' ? 'Açık temaya geç' : 'Koyu temaya geç'}
               >
                 {theme === 'dark' ? (
-                  <SunIcon className="h-5 w-5" />
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
                 ) : (
-                  <MoonIcon className="h-5 w-5" />
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
                 )}
               </button>
 
               {session ? (
-                <div className="flex items-center gap-x-4">
-                  <Popover className="relative">
-                    <Popover.Button className={`flex items-center gap-x-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors duration-200`}>
-                      <UserCircleIcon className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-                      <div className="flex flex-col items-start">
-                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
-                          {session.user?.email}
-                        </span>
-                        <span className="text-sm text-blue-500 font-semibold">
-                          {credit} Kredi
-                        </span>
-                      </div>
-                    </Popover.Button>
+                <div className="relative" ref={profileRef}>
+                  <button
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                    className={`flex items-center space-x-3 p-2 rounded-lg transition-colors ${
+                      theme === 'dark'
+                        ? 'hover:bg-gray-700'
+                        : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex flex-col items-end">
+                      <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        {session.user?.name || 'Kullanıcı'}
+                      </span>
+                      <span className="text-xs text-blue-500">{credit} Kredi</span>
+                    </div>
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                    <Transition
-                      as={Fragment}
-                      enter="transition ease-out duration-200"
-                      enterFrom="opacity-0 translate-y-1"
-                      enterTo="opacity-100 translate-y-0"
-                      leave="transition ease-in duration-150"
-                      leaveFrom="opacity-100 translate-y-0"
-                      leaveTo="opacity-0 translate-y-1"
-                    >
-                      <Popover.Panel className={`absolute right-0 z-10 mt-3 w-screen max-w-xs transform px-2 sm:px-0 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                        <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                          <div className="relative grid gap-6 px-5 py-6 sm:gap-8 sm:p-8">
-                            {userMenuItems.map((item) => (
-                              <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`-m-3 flex items-start rounded-lg p-3 ${
-                                  theme === 'dark' 
-                                    ? 'hover:bg-gray-700' 
-                                    : 'hover:bg-gray-50'
-                                }`}
-                              >
-                                <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                                <div className="ml-4">
-                                  <p className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                    {item.name}
-                                  </p>
-                                  <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                                    {item.description}
-                                  </p>
-                                </div>
-                              </Link>
-                            ))}
-                          </div>
-                          <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-5 py-5`}>
-                            <button
-                              onClick={handleSignOut}
-                              className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-red-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-600"
-                            >
-                              <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                              Çıkış Yap
-                            </button>
-                          </div>
-                        </div>
-                      </Popover.Panel>
-                    </Transition>
-                  </Popover>
+                  {isProfileOpen && (
+                    <div className={`absolute right-0 mt-2 w-48 rounded-xl shadow-lg py-1 ring-1 ring-black ring-opacity-5 ${
+                      theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+                    }`}>
+                      <Link
+                        href="/dashboard/profile"
+                        className={`block px-4 py-2 text-sm ${
+                          theme === 'dark'
+                            ? 'text-gray-300 hover:bg-gray-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        Profil
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className={`block w-full text-left px-4 py-2 text-sm ${
+                          theme === 'dark'
+                            ? 'text-gray-300 hover:bg-gray-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        Çıkış Yap
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center gap-x-4">
