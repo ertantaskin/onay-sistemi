@@ -29,8 +29,8 @@ export function CreditInfo() {
       
       if (response.ok) {
         const loadingTransactions = data.transactions.filter(
-          (t: CreditTransaction) => t.type === 'purchase' || t.type === 'coupon'
-        );
+          (t: CreditTransaction) => ['purchase', 'coupon', 'deposit'].includes(t.type)
+        ).slice(0, 3);
         setRecentTransactions(loadingTransactions);
       }
     } catch (error) {
@@ -54,6 +54,7 @@ export function CreditInfo() {
     switch (type) {
       case 'purchase': return 'Kredi Kartı ile Yükleme';
       case 'coupon': return 'Kupon ile Yükleme';
+      case 'deposit': return 'Bakiye Yükleme';
       default: return type;
     }
   };
