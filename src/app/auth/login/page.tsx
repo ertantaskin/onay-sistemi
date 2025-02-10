@@ -46,14 +46,11 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         <div className="text-center relative">
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-xl transform -rotate-6"></div>
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={64}
-            height={64}
-            className="relative mx-auto h-16 w-16 drop-shadow-xl"
-            priority
-          />
+          <div className="relative p-3 rounded-xl bg-white/10 backdrop-blur-sm">
+            <svg className="w-14 h-14 mx-auto text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
           <h2 className={`mt-6 text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${
             theme === 'dark' 
               ? 'from-blue-400 to-blue-600' 
