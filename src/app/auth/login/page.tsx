@@ -42,7 +42,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={`flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
         <div className="text-center relative">
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br from-blue-500/30 via-blue-400/20 to-blue-300/10 rounded-full shadow-xl transform -rotate-12 blur-[64px]"></div>
