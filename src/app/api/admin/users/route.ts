@@ -1,22 +1,20 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
-
-// Admin yetkisi kontrolü için middleware
-async function isAdmin(session: any) {
-  if (!session || !session.user || session.user.role !== 'admin') {
-    return false;
-  }
-  return true;
-}
+import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!await isAdmin(session)) {
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Bu işlem için admin yetkisi gerekiyor.' },
         { status: 403 }
@@ -26,48 +24,44 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
     const skip = (page - 1) * limit;
 
-    await dbConnect();
-
-    // Arama kriterlerini oluştur
-    const searchCriteria = search
-      ? {
-          $or: [
-            { email: { $regex: search, $options: 'i' } },
-            { name: { $regex: search, $options: 'i' } },
-          ],
-        }
-      : {};
-
     // Toplam kayıt sayısını al
-    const total = await User.countDocuments(searchCriteria);
+    const total = await prisma.user.count();
 
     // Kullanıcıları getir
-    const users = await User.find(searchCriteria)
-      .select('-password')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        credit: true,
+        role: true,
+        createdAt: true,
+        _count: {
+          select: {
+            approvals: true,
+            creditTransactions: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit
+    });
 
     return NextResponse.json({
       users: users.map(user => ({
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        credit: user.credit,
-        isActive: user.isActive,
-        lastLogin: user.lastLogin,
-        createdAt: user.createdAt,
+        ...user,
+        totalApprovals: user._count.approvals,
+        totalTransactions: user._count.creditTransactions
       })),
       pagination: {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
-      },
+        totalPages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     console.error('Kullanıcı listesi hatası:', error);
@@ -82,55 +76,60 @@ export async function PATCH(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!await isAdmin(session)) {
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
+        { status: 401 }
+      );
+    }
+
+    if (session.user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Bu işlem için admin yetkisi gerekiyor.' },
         { status: 403 }
       );
     }
 
-    const { userId, isActive, credit } = await req.json();
+    const { id, credit, role } = await req.json();
 
-    if (!userId) {
+    if (!id) {
       return NextResponse.json(
-        { error: 'Kullanıcı ID gereklidir.' },
+        { error: 'Kullanıcı ID\'si gereklidir.' },
         { status: 400 }
       );
     }
 
-    await dbConnect();
-
-    // Güncellenecek alanları belirle
-    const updateData: any = {};
-    if (typeof isActive === 'boolean') updateData.isActive = isActive;
-    if (typeof credit === 'number') updateData.credit = credit;
-
     // Kullanıcıyı güncelle
-    const user = await User.findByIdAndUpdate(
-      userId,
-      updateData,
-      { new: true }
-    ).select('-password');
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        ...(credit !== undefined && { credit }),
+        ...(role !== undefined && { role })
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        credit: true,
+        role: true,
+        createdAt: true
+      }
+    });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Kullanıcı bulunamadı.' },
-        { status: 404 }
-      );
+    if (credit !== undefined) {
+      // Kredi işlemi kaydı oluştur
+      await prisma.creditTransaction.create({
+        data: {
+          userId: id,
+          type: credit > 0 ? 'deposit' : 'refund',
+          amount: Math.abs(credit)
+        }
+      });
     }
 
     return NextResponse.json({
       message: 'Kullanıcı başarıyla güncellendi.',
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        credit: user.credit,
-        isActive: user.isActive,
-        lastLogin: user.lastLogin,
-        createdAt: user.createdAt,
-      },
+      user
     });
   } catch (error) {
     console.error('Kullanıcı güncelleme hatası:', error);

@@ -2,10 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
-import Approval from '@/models/Approval';
-import CreditTransaction from '@/models/CreditTransaction';
+import { prisma } from '@/lib/prisma';
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -13,19 +10,22 @@ export default async function DashboardPage() {
   if (!session) {
     redirect('/auth/login');
   }
-
-  await dbConnect();
   
   // Kullanıcı bilgilerini ve kredi bakiyesini getir
-  const user = await User.findById(session.user.id);
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id }
+  });
   
   // Toplam onay sayısını getir
-  const totalApprovals = await Approval.countDocuments({ userId: session.user.id });
+  const totalApprovals = await prisma.approval.count({
+    where: { userId: session.user.id }
+  });
 
   // Son işlemi getir
-  const lastTransaction = await CreditTransaction.findOne({ userId: session.user.id })
-    .sort({ createdAt: -1 })
-    .select('type amount createdAt');
+  const lastTransaction = await prisma.creditTransaction.findFirst({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: 'desc' }
+  });
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('tr-TR', {
