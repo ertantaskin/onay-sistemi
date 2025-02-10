@@ -56,29 +56,28 @@ const products = [
 
 const userMenuItems = [
   {
-    name: 'Onay Numarası Al',
-    description: 'IID numaranızı girerek hemen onay numaranızı alın',
-    href: '/dashboard/approvals/new',
-    icon: CheckCircleIcon,
+    name: 'Müşteri Paneli',
+    description: 'Genel bakış ve istatistikler',
+    href: '/dashboard',
+    icon: ChartBarIcon,
   },
   {
-    name: 'Onay Geçmişi',
-    description: 'Geçmiş onay işlemlerinizi görüntüleyin',
-    href: '/dashboard/approvals/history',
-    icon: ClockIcon,
+    name: 'Profil Bilgileri',
+    description: 'Hesap ayarlarınızı düzenleyin',
+    href: '/dashboard/profile',
+    icon: UserCircleIcon,
   },
   {
     name: 'Kredi Yükle',
     description: 'Bakiyenizi artırın',
     href: '/dashboard/credits/add',
     icon: CreditCardIcon,
-    highlight: true,
   },
   {
-    name: 'Destek Al',
-    description: 'Sorularınız için destek ekibimizle iletişime geçin',
-    href: '/support',
-    icon: QuestionMarkCircleIcon,
+    name: 'Onay Geçmişi',
+    description: 'Geçmiş işlemlerinizi görüntüleyin',
+    href: '/dashboard/approvals/history',
+    icon: ClockIcon,
   },
 ];
 
@@ -142,7 +141,7 @@ export function Header() {
                 <div className="relative group">
                   <button className={`flex items-center gap-x-1 text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
                     Onay İşlemleri
-                    <CheckCircleIcon className="h-5 w-5 ml-1" aria-hidden="true" />
+                    <CheckCircleIcon className="h-5 w-5" aria-hidden="true" />
                   </button>
 
                   <div className={`absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 transform px-2 sm:px-0 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200`}>
@@ -310,6 +309,9 @@ export function Header() {
                             <div>
                               <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                                 {session.user?.email}
+                              </p>
+                              <p className="text-sm text-blue-500 font-semibold">
+                                {credit} Kredi
                               </p>
                             </div>
                           </div>
