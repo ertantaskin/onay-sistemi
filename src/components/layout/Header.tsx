@@ -27,10 +27,22 @@ import { useCreditStore } from '@/store/creditStore';
 
 const products = [
   {
+    name: 'Onay Numarası Al',
+    description: 'IID numaranız ile hızlıca onay alın',
+    href: '/dashboard/approvals/new',
+    icon: CreditCardIcon,
+  },
+  {
+    name: 'Onay Geçmişi',
+    description: 'Geçmiş onay işlemlerinizi görüntüleyin',
+    href: '/dashboard/approvals/history',
+    icon: ClockIcon,
+  },
+  {
     name: 'Kredi Yükle',
     description: 'Hesabınıza kredi yükleyerek onay işlemlerinizi gerçekleştirin',
     href: '/dashboard/credits/add',
-    icon: CreditCardIcon,
+    icon: CurrencyDollarIcon,
   },
   {
     name: 'Destek Al',
@@ -48,22 +60,28 @@ const userMenuItems = [
     icon: ChartBarIcon,
   },
   {
-    name: 'Profil Bilgileri',
-    description: 'Hesap ayarlarınızı düzenleyin',
-    href: '/dashboard/profile',
-    icon: UserCircleIcon,
+    name: 'Onay Numarası Al',
+    description: 'IID numaranız ile hızlıca onay alın',
+    href: '/dashboard/approvals/new',
+    icon: CreditCardIcon,
+  },
+  {
+    name: 'Onay Geçmişi',
+    description: 'Geçmiş onay işlemlerinizi görüntüleyin',
+    href: '/dashboard/approvals/history',
+    icon: ClockIcon,
   },
   {
     name: 'Kredi Yükle',
     description: 'Bakiyenizi artırın',
     href: '/dashboard/credits/add',
-    icon: CreditCardIcon,
+    icon: CurrencyDollarIcon,
   },
   {
-    name: 'Onay Geçmişi',
-    description: 'Geçmiş işlemlerinizi görüntüleyin',
-    href: '/dashboard/approvals/history',
-    icon: ClockIcon,
+    name: 'Destek Al',
+    description: 'Sorularınız için destek ekibimizle iletişime geçin',
+    href: '/support',
+    icon: QuestionMarkCircleIcon,
   },
 ];
 
@@ -126,7 +144,7 @@ export function Header() {
               {session && (
                 <div className="relative group">
                   <button className={`flex items-center gap-x-1 text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
-                    Kredi İşlemleri
+                    Onay İşlemleri
                     <span className="ml-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
                       {credit}
                     </span>
