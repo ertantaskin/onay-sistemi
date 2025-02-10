@@ -60,11 +60,11 @@ export default function RegisterPage() {
     <div className={`min-h-[calc(100vh-96px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="max-w-md w-full">
         <div className="text-center relative">
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-[1.5rem] shadow-xl transform -rotate-6 blur-md"></div>
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-20 h-20 bg-gradient-to-br from-green-400/20 to-green-600/20 rounded-[1.5rem] shadow-xl transform rotate-6 blur-md"></div>
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br from-green-500/30 via-green-400/20 to-green-300/10 rounded-full shadow-xl transform -rotate-12 blur-[64px]"></div>
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br from-green-400/30 via-green-500/20 to-green-600/10 rounded-full shadow-xl transform rotate-12 blur-[64px]"></div>
           <div className="relative">
-            <div className="relative p-4 rounded-2xl bg-gradient-to-br from-green-600/5 to-green-400/5 backdrop-blur-sm border border-white/10 shadow-2xl transform hover:scale-105 transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-br from-green-600/10 to-green-400/10 rounded-2xl blur-[2px] opacity-50"></div>
+            <div className="relative p-6 rounded-2xl bg-gradient-to-br from-green-600/5 via-green-500/5 to-green-400/5 backdrop-blur-xl border border-white/10 shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-600/10 via-green-500/10 to-green-400/10 rounded-2xl blur-md opacity-50"></div>
               <svg className="relative w-16 h-16 mx-auto text-green-500 transform hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
