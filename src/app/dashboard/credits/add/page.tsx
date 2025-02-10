@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { CreditCardIcon, GiftIcon } from '@heroicons/react/24/outline';
 import { useCreditStore } from '@/store/creditStore';
+import { CreditInfo } from '@/components/dashboard/CreditInfo';
 
 const creditOptions = [
   { value: 100, label: '100 Kredi', price: '50 TL' },
@@ -71,7 +72,9 @@ export default function AddCreditPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+        <CreditInfo />
+        
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-8">
           <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
             Kredi Yükle
           </h1>
