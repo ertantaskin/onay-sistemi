@@ -78,22 +78,53 @@ export function Header() {
   useEffect(() => {
     const fetchCredit = async () => {
       try {
-        const response = await fetch('/api/users/me');
+        const response = await fetch('/api/users/me', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include' // CSRF koruması için önemli
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
-        if (response.ok) {
+        
+        if (data.credit !== undefined) {
           setCredit(data.credit);
+          
           // Session'ı güncelle
-          await update({ ...session, user: { ...session?.user, credit: data.credit } });
+          if (session?.user) {
+            await update({
+              ...session,
+              user: {
+                ...session.user,
+                credit: data.credit
+              }
+            });
+          }
+          
+          console.log('Kredi güncellendi:', data.credit);
+        } else {
+          console.error('Kredi verisi bulunamadı:', data);
         }
       } catch (error) {
         console.error('Kredi bilgisi alınamadı:', error);
+        // 3 saniye sonra tekrar dene
+        setTimeout(() => {
+          if (session?.user?.id) {
+            fetchCredit();
+          }
+        }, 3000);
       }
     };
 
-    if (session) {
+    if (session?.user?.id) {
       fetchCredit();
     }
-  }, [session]);
+  }, [session?.user?.id, update]);
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' });

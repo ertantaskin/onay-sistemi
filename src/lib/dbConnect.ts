@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI!;
 
 if (!MONGODB_URI) {
-  throw new Error('MONGODB_URI ortam değişkeni tanımlanmamış.');
+  throw new Error('MongoDB URI tanımlanmamış. Lütfen .env dosyasını kontrol edin.');
 }
 
 let cached = global.mongoose;
@@ -14,41 +14,37 @@ if (!cached) {
 
 async function dbConnect() {
   if (cached.conn) {
+    console.log('Mevcut MongoDB bağlantısı kullanılıyor');
     return cached.conn;
   }
 
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-      family: 4,
-      retryWrites: true,
-      writeConcern: {
-        w: 'majority'
-      }
+      maxPoolSize: 5,
+      minPoolSize: 1,
+      socketTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 10000,
+      family: 4
     };
 
-    try {
-      cached.promise = mongoose.connect(MONGODB_URI, opts);
-      cached.conn = await cached.promise;
-      return cached.conn;
-    } catch (error) {
-      console.error('MongoDB bağlantı hatası:', error);
-      cached.promise = null;
-      throw error;
-    }
+    console.log('Yeni MongoDB bağlantısı oluşturuluyor...');
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log('MongoDB bağlantısı başarılı');
+      return mongoose;
+    });
   }
 
   try {
     cached.conn = await cached.promise;
-    return cached.conn;
-  } catch (error) {
-    console.error('Bağlantı hatası:', error);
+  } catch (e) {
     cached.promise = null;
-    throw error;
+    console.error('MongoDB bağlantı hatası:', e);
+    throw e;
   }
+
+  return cached.conn;
 }
 
 export default dbConnect; 
