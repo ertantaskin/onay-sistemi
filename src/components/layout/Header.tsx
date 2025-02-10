@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect } from 'react';
 import { useTheme } from '@/app/ThemeContext';
 import { Popover, Transition } from '@headlessui/react';
 import {
@@ -24,7 +24,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useCreditStore } from '@/store/creditStore';
-import { useRouter, usePathname } from 'next/navigation';
 
 const products = [
   {
@@ -73,12 +72,8 @@ function classNames(...classes: string[]) {
 }
 
 export function Header() {
-  const { data: session } = useSession();
   const { theme, toggleTheme } = useTheme();
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
-  const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  const { data: session } = useSession();
   const { credit, updateCredit } = useCreditStore();
 
   useEffect(() => {
@@ -88,353 +83,343 @@ export function Header() {
   }, [session, updateCredit]);
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: '/auth/login' });
+    signOut({ callbackUrl: '/' });
   };
 
-  const navigation = [
-    { name: 'Ana Sayfa', href: '/dashboard' },
-    {
-      name: 'Onay İşlemleri',
-      items: [
-        { name: 'Yeni Onay Al', href: '/dashboard/approvals/new' },
-        { name: 'Onay Geçmişi', href: '/dashboard/approvals/history' },
-      ],
-    },
-    {
-      name: 'Kredi İşlemleri',
-      items: [
-        { name: 'Kredi Yükle', href: '/dashboard/credits/add' },
-        { name: 'Kredi Geçmişi', href: '/dashboard/credits/history' },
-      ],
-    },
-  ];
-
   return (
-    <header className="fixed w-full top-0 z-50">
-      <nav className={`${theme === 'dark' ? 'bg-gray-900/95' : 'bg-white/95'} backdrop-blur-sm border-b ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'}`}>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between">
-            <div className="flex">
-              <div className="flex flex-shrink-0 items-center">
-                <Link href="/dashboard" className="flex items-center">
-                  <div className="relative group">
-                    <div className="absolute -inset-1 rounded-lg bg-gradient-to-br from-blue-600/20 to-blue-400/20 group-hover:from-blue-600/30 group-hover:to-blue-400/30 blur-lg transition-all duration-300"></div>
-                    <div className={`relative flex items-center space-x-2 px-3 py-2 rounded-lg ${
-                      theme === 'dark' ? 'bg-gray-800/80' : 'bg-white/80'
-                    } backdrop-blur-sm ring-1 ring-gray-900/5 shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300`}>
-                      <div className="relative p-1 rounded-md bg-gradient-to-br from-blue-500/10 to-blue-400/10">
-                        <svg className={`w-6 h-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} transform group-hover:rotate-12 transition-transform duration-300`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                      </div>
-                      <span className={`text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r ${
-                        theme === 'dark' 
-                          ? 'from-blue-400 to-blue-600' 
-                          : 'from-blue-600 to-blue-800'
-                      } drop-shadow-sm`}>
-                        Microsoft Onay
-                      </span>
-                    </div>
+    <Popover className={`fixed top-0 left-0 right-0 z-50 ${theme === 'dark' ? 'bg-gray-800/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm'} shadow-lg`}>
+      {({ open }) => (
+        <>
+          <nav className="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
+            <div className="flex lg:flex-1">
+              <Link href="/" className="-m-1.5 p-1.5 flex items-center space-x-3 group">
+                <div className="relative">
+                  <div className="absolute -inset-1 rounded-lg bg-gradient-to-r from-blue-600 to-blue-400 opacity-25 group-hover:opacity-50 blur transition duration-200"></div>
+                  <div className={`relative p-2 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} ring-1 ring-gray-900/5 shadow-xl`}>
+                    <svg className={`w-6 h-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
                   </div>
-                </Link>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                {navigation.map((item) => (
-                  item.items ? (
-                    <div
-                      key={item.name}
-                      className="relative"
-                      onMouseEnter={() => setHoveredMenu(item.name)}
-                      onMouseLeave={() => setHoveredMenu(null)}
-                    >
-                      <button
-                        className={`inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors duration-200 ${
-                          hoveredMenu === item.name
-                            ? theme === 'dark'
-                              ? 'text-white border-b-2 border-blue-500'
-                              : 'text-gray-900 border-b-2 border-blue-500'
-                            : theme === 'dark'
-                            ? 'text-gray-300 hover:text-white'
-                            : 'text-gray-500 hover:text-gray-900'
-                        }`}
-                      >
-                        {item.name}
-                        <svg className={`ml-2 h-4 w-4 transition-transform duration-200 ${hoveredMenu === item.name ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-                      {hoveredMenu === item.name && (
-                        <div className="absolute left-0 mt-2 w-48 rounded-xl shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
-                          {item.items.map((subItem) => (
+                </div>
+                <span className={`text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r ${
+                  theme === 'dark' 
+                    ? 'from-blue-400 to-blue-600' 
+                    : 'from-blue-600 to-blue-800'
+                }`}>
+                  Microsoft Onay
+                </span>
+              </Link>
+            </div>
+
+            <div className="flex lg:hidden">
+              <Popover.Button className={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className="sr-only">Menüyü aç</span>
+                <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+              </Popover.Button>
+            </div>
+
+            <div className="hidden lg:flex lg:gap-x-12">
+              <Link href="/" className={`text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
+                Ana Sayfa
+              </Link>
+
+              {session && (
+                <Popover className="relative group">
+                  <Popover.Button className={`flex items-center gap-x-1 text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
+                    Kredi İşlemleri
+                    <span className="ml-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
+                      {credit}
+                    </span>
+                    <CurrencyDollarIcon className="h-5 w-5" aria-hidden="true" />
+                  </Popover.Button>
+
+                  <Transition
+                    as={Fragment}
+                    show={true}
+                    enter="transition ease-out duration-200"
+                    enterFrom="opacity-0 translate-y-1"
+                    enterTo="opacity-100 translate-y-0"
+                    leave="transition ease-in duration-150"
+                    leaveFrom="opacity-100 translate-y-0"
+                    leaveTo="opacity-0 translate-y-1"
+                  >
+                    <Popover.Panel static className={`absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 transform px-2 sm:px-0 invisible group-hover:visible`}>
+                      <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                        <div className={`relative grid gap-6 px-5 py-6 sm:gap-8 sm:p-8 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                          {products.map((item) => (
                             <Link
-                              key={subItem.name}
-                              href={subItem.href}
-                              className={`block px-4 py-2 text-sm transition-colors duration-200 ${
-                                theme === 'dark'
-                                  ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                              key={item.name}
+                              href={item.href}
+                              className={`-m-3 flex items-start rounded-lg p-3 ${
+                                theme === 'dark' 
+                                  ? 'hover:bg-gray-700' 
+                                  : 'hover:bg-gray-50'
                               }`}
                             >
-                              {subItem.name}
+                              <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
+                              <div className="ml-4">
+                                <p className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                  {item.name}
+                                </p>
+                                <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                  {item.description}
+                                </p>
+                              </div>
                             </Link>
                           ))}
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={`inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors duration-200 ${
-                        pathname === item.href
-                          ? theme === 'dark'
-                            ? 'text-white border-b-2 border-blue-500'
-                            : 'text-gray-900 border-b-2 border-blue-500'
-                          : theme === 'dark'
-                          ? 'text-gray-300 hover:text-white'
-                          : 'text-gray-500 hover:text-gray-900'
-                      }`}
-                    >
-                      {item.name}
-                    </Link>
-                  )
-                ))}
-              </div>
+                      </div>
+                    </Popover.Panel>
+                  </Transition>
+                </Popover>
+              )}
+
+              <Link href="/about" className={`text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
+                Hakkında
+              </Link>
             </div>
-            <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
+
+            <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
               <button
-                type="button"
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-colors duration-200 ${
-                  theme === 'dark'
-                    ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                className={`p-2 rounded-lg transition-all duration-200 ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
+                aria-label={theme === 'dark' ? 'Açık temaya geç' : 'Koyu temaya geç'}
               >
                 {theme === 'dark' ? (
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
+                  <SunIcon className="h-5 w-5" />
                 ) : (
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
+                  <MoonIcon className="h-5 w-5" />
                 )}
               </button>
 
-              <div className="relative" onMouseEnter={() => setHoveredMenu('profile')} onMouseLeave={() => setHoveredMenu(null)}>
-                <button
-                  type="button"
-                  className={`flex items-center space-x-3 rounded-lg p-2 transition-colors duration-200 ${
-                    hoveredMenu === 'profile'
-                      ? theme === 'dark'
-                        ? 'bg-gray-800 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                      : theme === 'dark'
-                      ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                >
-                  <span className="sr-only">Kullanıcı menüsü</span>
-                  <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-medium">
-                      {session?.user?.name?.charAt(0) || session?.user?.email?.charAt(0) || 'U'}
-                    </div>
-                    <div className="hidden md:flex md:flex-col md:items-start">
-                      <span className="text-sm font-medium">
-                        {session?.user?.name || session?.user?.email}
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {session?.user?.credit || 0} Kredi
-                      </span>
-                    </div>
-                  </div>
-                  <svg className={`ml-2 h-4 w-4 transition-transform duration-200 ${hoveredMenu === 'profile' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+              {session ? (
+                <div className="flex items-center gap-x-4">
+                  <Popover className="relative group">
+                    <Popover.Button className={`flex items-center gap-x-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors duration-200`}>
+                      <UserCircleIcon className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+                      <div className="flex flex-col items-start">
+                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+                          {session.user?.email}
+                        </span>
+                        <span className="text-sm text-blue-500 font-semibold">
+                          {credit} Kredi
+                        </span>
+                      </div>
+                    </Popover.Button>
 
-                {hoveredMenu === 'profile' && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-xl shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
-                    <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                      {session?.user?.email}
-                    </div>
-                    <Link
-                      href="/dashboard/profile"
-                      className={`block px-4 py-2 text-sm transition-colors duration-200 ${
-                        theme === 'dark'
-                          ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                      }`}
+                    <Transition
+                      as={Fragment}
+                      show={true}
+                      enter="transition ease-out duration-200"
+                      enterFrom="opacity-0 translate-y-1"
+                      enterTo="opacity-100 translate-y-0"
+                      leave="transition ease-in duration-150"
+                      leaveFrom="opacity-100 translate-y-0"
+                      leaveTo="opacity-0 translate-y-1"
                     >
-                      Profil Ayarları
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className={`block w-full text-left px-4 py-2 text-sm transition-colors duration-200 ${
-                        theme === 'dark'
-                          ? 'text-gray-300 hover:text-white hover:bg-gray-700'
-                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                      }`}
-                    >
-                      Çıkış Yap
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center sm:hidden">
-              <button
-                type="button"
-                onClick={() => setIsOpen(!isOpen)}
-                className={`inline-flex items-center justify-center p-2 rounded-md ${
-                  theme === 'dark'
-                    ? 'text-gray-400 hover:text-white hover:bg-gray-800'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <span className="sr-only">Ana menüyü aç</span>
-                {isOpen ? (
-                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                ) : (
-                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobil menü */}
-        <div className={`${isOpen ? 'block' : 'hidden'} sm:hidden`}>
-          <div className={`pt-2 pb-3 space-y-1 ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
-            {navigation.map((item) => (
-              item.items ? (
-                <div key={item.name}>
-                  <button
-                    onClick={() => setHoveredMenu(hoveredMenu === item.name ? null : item.name)}
-                    className={`w-full flex items-center justify-between px-4 py-2 text-base font-medium ${
-                      hoveredMenu === item.name
-                        ? theme === 'dark'
-                          ? 'text-white bg-gray-800'
-                          : 'text-gray-900 bg-gray-100'
-                        : theme === 'dark'
-                        ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                  >
-                    {item.name}
-                    <svg className={`ml-2 h-4 w-4 transition-transform duration-200 ${hoveredMenu === item.name ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {hoveredMenu === item.name && (
-                    <div className="pl-4">
-                      {item.items.map((subItem) => (
-                        <Link
-                          key={subItem.name}
-                          href={subItem.href}
-                          className={`block px-4 py-2 text-base font-medium ${
-                            theme === 'dark'
-                              ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                          }`}
-                          onClick={() => setIsOpen(false)}
-                        >
-                          {subItem.name}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+                      <Popover.Panel static className={`absolute right-0 z-10 mt-3 w-screen max-w-xs transform px-2 sm:px-0 invisible group-hover:visible`}>
+                        <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                          <div className={`relative grid gap-6 px-5 py-6 sm:gap-8 sm:p-8 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                            {userMenuItems.map((item) => (
+                              <Link
+                                key={item.name}
+                                href={item.href}
+                                className={`-m-3 flex items-start rounded-lg p-3 ${
+                                  theme === 'dark' 
+                                    ? 'hover:bg-gray-700' 
+                                    : 'hover:bg-gray-50'
+                                }`}
+                              >
+                                <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
+                                <div className="ml-4">
+                                  <p className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                    {item.name}
+                                  </p>
+                                  <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                          <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-5 py-5`}>
+                            <button
+                              onClick={handleSignOut}
+                              className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-red-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-600"
+                            >
+                              <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                              Çıkış Yap
+                            </button>
+                          </div>
+                        </div>
+                      </Popover.Panel>
+                    </Transition>
+                  </Popover>
                 </div>
               ) : (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`block px-4 py-2 text-base font-medium ${
-                    pathname === item.href
-                      ? theme === 'dark'
-                        ? 'text-white bg-gray-800'
-                        : 'text-gray-900 bg-gray-100'
-                      : theme === 'dark'
-                      ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                      : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              )
-            ))}
-          </div>
-          <div className={`pt-4 pb-3 border-t ${theme === 'dark' ? 'border-gray-800 bg-gray-900' : 'border-gray-200 bg-white'}`}>
-            <div className="flex items-center px-4">
-              <div className="flex-shrink-0">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-medium">
-                  {session?.user?.name?.charAt(0) || session?.user?.email?.charAt(0) || 'U'}
+                <div className="flex items-center gap-x-4">
+                  <Link
+                    href="/auth/login"
+                    className="flex items-center gap-x-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                  >
+                    <UserIcon className="h-5 w-5" />
+                    Giriş Yap
+                  </Link>
+                  <Link
+                    href="/auth/register"
+                    className="flex items-center gap-x-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-500"
+                  >
+                    <UserPlusIcon className="h-5 w-5" />
+                    Kayıt Ol
+                  </Link>
+                </div>
+              )}
+            </div>
+          </nav>
+
+          <Transition
+            as={Fragment}
+            enter="duration-200 ease-out"
+            enterFrom="opacity-0 scale-95"
+            enterTo="opacity-100 scale-100"
+            leave="duration-100 ease-in"
+            leaveFrom="opacity-100 scale-100"
+            leaveTo="opacity-0 scale-95"
+          >
+            <Popover.Panel focus className={`absolute inset-x-0 top-0 origin-top-right transform p-2 transition md:hidden ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+              <div className={`rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="px-5 pt-4 pb-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Image
+                        className="h-8 w-auto"
+                        src="/logo.png"
+                        alt="Logo"
+                        width={32}
+                        height={32}
+                        priority
+                      />
+                    </div>
+                    <div className="-mr-2">
+                      <Popover.Button className={`inline-flex items-center justify-center rounded-md p-2 ${theme === 'dark' ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-500' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-500'}`}>
+                        <span className="sr-only">Menüyü kapat</span>
+                        <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                      </Popover.Button>
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <nav className="grid gap-y-4">
+                      {session && (
+                        <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                          <div className="flex items-center space-x-3">
+                            <UserCircleIcon className="h-6 w-6 text-blue-500" />
+                            <div>
+                              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+                                {session.user?.email}
+                              </p>
+                              <p className="text-sm text-blue-500 font-semibold">
+                                {credit} Kredi
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <Link
+                        href="/"
+                        className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
+                      >
+                        <HomeIcon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
+                        <span className="ml-3 text-base font-medium">Ana Sayfa</span>
+                      </Link>
+
+                      {session && userMenuItems.map((item) => (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
+                        >
+                          <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
+                          <span className="ml-3 text-base font-medium">{item.name}</span>
+                        </Link>
+                      ))}
+
+                      {session && products.map((item) => (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
+                        >
+                          <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
+                          <span className="ml-3 text-base font-medium">{item.name}</span>
+                        </Link>
+                      ))}
+
+                      <Link
+                        href="/about"
+                        className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
+                      >
+                        <InformationCircleIcon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
+                        <span className="ml-3 text-base font-medium">Hakkında</span>
+                      </Link>
+                    </nav>
+                  </div>
+                </div>
+                <div className={`px-5 py-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      onClick={toggleTheme}
+                      className={`p-2 rounded-lg transition-all duration-200 ${
+                        theme === 'dark' 
+                          ? 'bg-gray-600 text-yellow-400 hover:bg-gray-500' 
+                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                    >
+                      {theme === 'dark' ? (
+                        <SunIcon className="h-5 w-5" />
+                      ) : (
+                        <MoonIcon className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {session ? (
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-red-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-600"
+                      >
+                        <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                        Çıkış Yap
+                      </button>
+                    ) : (
+                      <>
+                        <Link
+                          href="/auth/login"
+                          className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-600"
+                        >
+                          <UserIcon className="h-5 w-5" />
+                          Giriş Yap
+                        </Link>
+                        <Link
+                          href="/auth/register"
+                          className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-green-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-600"
+                        >
+                          <UserPlusIcon className="h-5 w-5" />
+                          Kayıt Ol
+                        </Link>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="ml-3">
-                <div className="text-base font-medium text-gray-800 dark:text-white">
-                  {session?.user?.name || session?.user?.email}
-                </div>
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  {session?.user?.credit || 0} Kredi
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className={`ml-auto p-2 rounded-lg transition-colors duration-200 ${
-                  theme === 'dark'
-                    ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                {theme === 'dark' ? (
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-            <div className="mt-3 space-y-1">
-              <Link
-                href="/dashboard/profile"
-                className={`block px-4 py-2 text-base font-medium ${
-                  theme === 'dark'
-                    ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-                onClick={() => setIsOpen(false)}
-              >
-                Profil Ayarları
-              </Link>
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  handleSignOut();
-                }}
-                className={`block w-full text-left px-4 py-2 text-base font-medium ${
-                  theme === 'dark'
-                    ? 'text-gray-300 hover:text-white hover:bg-gray-800'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                Çıkış Yap
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-    </header>
+            </Popover.Panel>
+          </Transition>
+        </>
+      )}
+    </Popover>
   );
 } 
