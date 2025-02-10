@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useTheme } from '@/app/ThemeContext';
 import toast from 'react-hot-toast';
+import { CreditCardIcon, GiftIcon } from '@heroicons/react/24/outline';
 
 const creditOptions = [
   { value: 100, label: '100 Kredi', price: '50 TL' },
@@ -16,15 +16,20 @@ const creditOptions = [
 export default function AddCreditPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [selectedCredit, setSelectedCredit] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('credit_card');
+  const [couponCode, setCouponCode] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedCredit) {
+    if (!selectedCredit && paymentMethod === 'credit_card') {
       toast.error('Lütfen bir kredi paketi seçin.');
+      return;
+    }
+
+    if (paymentMethod === 'coupon' && !couponCode) {
+      toast.error('Lütfen kupon kodunu girin.');
       return;
     }
 
@@ -39,6 +44,7 @@ export default function AddCreditPage() {
         body: JSON.stringify({
           amount: selectedCredit,
           paymentMethod,
+          couponCode: paymentMethod === 'coupon' ? couponCode : undefined,
         }),
       });
 
@@ -48,173 +54,99 @@ export default function AddCreditPage() {
         throw new Error(data.error || 'Kredi yükleme işlemi başarısız oldu.');
       }
 
-      toast.success('Kredi başarıyla yüklendi!');
+      toast.success('Kredi yükleme işlemi başarılı!');
       router.push('/dashboard');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Bir hata oluştu.');
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Bir hata oluştu.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-lg p-6`}>
-        <h1 className={`text-2xl font-bold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          Kredi Yükle
-        </h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+            Kredi Yükle
+          </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className={`block text-sm font-medium mb-4 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-              Kredi Paketi Seçin
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {creditOptions.map((option) => (
-                <div
-                  key={option.value}
-                  onClick={() => setSelectedCredit(option.value)}
-                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    selectedCredit === option.value
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : theme === 'dark'
-                      ? 'border-gray-700 hover:border-gray-600'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        {option.label}
-                      </p>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {option.price}
-                      </p>
-                    </div>
-                    <div className={`w-4 h-4 rounded-full border ${
-                      selectedCredit === option.value
-                        ? 'border-blue-500 bg-blue-500'
-                        : theme === 'dark'
-                        ? 'border-gray-600'
-                        : 'border-gray-300'
-                    }`}>
-                      {selectedCredit === option.value && (
-                        <div className="w-2 h-2 m-1 rounded-full bg-white" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-              Ödeme Yöntemi
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="mb-8">
+            <div className="flex space-x-4 mb-6">
               <button
-                type="button"
                 onClick={() => setPaymentMethod('credit_card')}
-                className={`p-4 rounded-lg border-2 text-left ${
+                className={`flex-1 flex items-center justify-center space-x-2 p-4 rounded-lg border-2 transition-colors ${
                   paymentMethod === 'credit_card'
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : theme === 'dark'
-                    ? 'border-gray-700'
-                    : 'border-gray-200'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
                 }`}
               >
-                <div className="flex items-center">
-                  <div className={`w-4 h-4 rounded-full border ${
-                    paymentMethod === 'credit_card'
-                      ? 'border-blue-500 bg-blue-500'
-                      : theme === 'dark'
-                      ? 'border-gray-600'
-                      : 'border-gray-300'
-                  }`}>
-                    {paymentMethod === 'credit_card' && (
-                      <div className="w-2 h-2 m-1 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <div className="ml-3">
-                    <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      Kredi Kartı
-                    </p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Güvenli ödeme
-                    </p>
-                  </div>
-                </div>
+                <CreditCardIcon className="h-6 w-6 text-blue-500" />
+                <span className="text-gray-900 dark:text-white font-medium">Kredi Kartı</span>
               </button>
-
               <button
-                type="button"
-                onClick={() => setPaymentMethod('bank_transfer')}
-                className={`p-4 rounded-lg border-2 text-left ${
-                  paymentMethod === 'bank_transfer'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : theme === 'dark'
-                    ? 'border-gray-700'
-                    : 'border-gray-200'
+                onClick={() => setPaymentMethod('coupon')}
+                className={`flex-1 flex items-center justify-center space-x-2 p-4 rounded-lg border-2 transition-colors ${
+                  paymentMethod === 'coupon'
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700'
                 }`}
               >
-                <div className="flex items-center">
-                  <div className={`w-4 h-4 rounded-full border ${
-                    paymentMethod === 'bank_transfer'
-                      ? 'border-blue-500 bg-blue-500'
-                      : theme === 'dark'
-                      ? 'border-gray-600'
-                      : 'border-gray-300'
-                  }`}>
-                    {paymentMethod === 'bank_transfer' && (
-                      <div className="w-2 h-2 m-1 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <div className="ml-3">
-                    <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      Havale/EFT
-                    </p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                      Banka transferi
-                    </p>
-                  </div>
-                </div>
+                <GiftIcon className="h-6 w-6 text-purple-500" />
+                <span className="text-gray-900 dark:text-white font-medium">Kupon Kodu</span>
               </button>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className={`px-4 py-2 text-sm font-medium rounded-md ${
-                theme === 'dark'
-                  ? 'bg-gray-600 text-gray-200 hover:bg-gray-500'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Geri
-            </button>
+          <form onSubmit={handleSubmit}>
+            {paymentMethod === 'credit_card' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                {creditOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setSelectedCredit(option.value)}
+                    className={`p-4 rounded-lg border-2 transition-colors ${
+                      selectedCredit === option.value
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-700'
+                    }`}
+                  >
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {option.label}
+                    </div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {option.price}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="mb-8">
+                <label htmlFor="couponCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Kupon Kodu
+                </label>
+                <input
+                  type="text"
+                  id="couponCode"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                  placeholder="Kupon kodunuzu girin"
+                />
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={loading || !selectedCredit}
-              className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
-                loading || !selectedCredit
-                  ? 'bg-blue-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+              disabled={loading || (paymentMethod === 'credit_card' && !selectedCredit) || (paymentMethod === 'coupon' && !couponCode)}
+              className="w-full py-3 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? (
-                <div className="flex items-center">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  İşleniyor...
-                </div>
-              ) : (
-                'Ödemeye Geç'
-              )}
+              {loading ? 'İşleniyor...' : 'Ödemeyi Tamamla'}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

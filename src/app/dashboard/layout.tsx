@@ -9,7 +9,7 @@ export default function DashboardLayout({
   return (
     <>
       <Header />
-      <main className="pt-24">{children}</main>
+      <main className="pt-24 min-h-screen bg-gray-50 dark:bg-gray-900">{children}</main>
       <Footer />
     </>
   );
