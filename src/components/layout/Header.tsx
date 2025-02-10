@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useTheme } from '@/app/ThemeContext';
 import { Popover, Transition } from '@headlessui/react';
 import {
@@ -72,7 +72,28 @@ function classNames(...classes: string[]) {
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
+  const [credit, setCredit] = useState(0);
+
+  useEffect(() => {
+    const fetchCredit = async () => {
+      try {
+        const response = await fetch('/api/users/me');
+        const data = await response.json();
+        if (response.ok) {
+          setCredit(data.credit);
+          // Session'ı güncelle
+          await update({ ...session, user: { ...session?.user, credit: data.credit } });
+        }
+      } catch (error) {
+        console.error('Kredi bilgisi alınamadı:', error);
+      }
+    };
+
+    if (session) {
+      fetchCredit();
+    }
+  }, [session]);
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' });
@@ -190,7 +211,7 @@ export function Header() {
                           {session.user?.email}
                         </span>
                         <span className="text-sm text-blue-500 font-semibold">
-                          {session.user?.credit || 0} Kredi
+                          {credit} Kredi
                         </span>
                       </div>
                     </Popover.Button>
@@ -305,7 +326,7 @@ export function Header() {
                                 {session.user?.email}
                               </p>
                               <p className="text-sm text-blue-500 font-semibold">
-                                {session.user?.credit || 0} Kredi
+                                {credit} Kredi
                               </p>
                             </div>
                           </div>
