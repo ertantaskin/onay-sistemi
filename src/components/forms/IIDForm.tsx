@@ -117,7 +117,7 @@ export function IIDForm() {
               setResult({
                 status: 'error',
                 message: saveData.error || 'Onay kaydı başarısız oldu',
-                showConfirmation: saveResponse.status !== 402 // 402: Yetersiz kredi
+                showConfirmation: false
               });
               toast.error(saveData.error || 'Onay kaydı başarısız oldu');
               

@@ -1,53 +1,43 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
 
 export async function GET() {
   try {
-    // Session kontrolü
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.id) {
+    if (!session) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
         { status: 401 }
       );
     }
-    
-    // Veritabanı bağlantısı
+
     await dbConnect();
     
-    // Sadece credit alanını seç
-    const user = await User.findById(session.user.id)
-      .select('credit')
-      .lean()
-      .exec();
-    
+    const user = await User.findById(session.user.id).select('credit email name');
+
     if (!user) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'Kullanıcı bulunamadı.' },
         { status: 404 }
       );
     }
-    
-    // Cache-Control header'ı ekle
-    return new NextResponse(
-      JSON.stringify({ credit: user.credit }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'private, s-maxage=10'
-        }
+
+    return NextResponse.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        credit: user.credit
       }
-    );
-    
+    });
   } catch (error) {
-    console.error('API hatası:', error);
+    console.error('Kullanıcı bilgileri hatası:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Kullanıcı bilgileri alınırken bir hata oluştu.' },
       { status: 500 }
     );
   }

@@ -72,59 +72,27 @@ function classNames(...classes: string[]) {
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
-  const { data: session, update } = useSession();
-  const [credit, setCredit] = useState(0);
+  const { data: session } = useSession();
+  const [userCredit, setUserCredit] = useState<number>(0);
 
   useEffect(() => {
-    const fetchCredit = async () => {
-      try {
-        const response = await fetch('/api/users/me', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include' // CSRF koruması için önemli
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.credit !== undefined) {
-          setCredit(data.credit);
+    const fetchUserCredit = async () => {
+      if (session) {
+        try {
+          const response = await fetch('/api/users/me');
+          const data = await response.json();
           
-          // Session'ı güncelle
-          if (session?.user) {
-            await update({
-              ...session,
-              user: {
-                ...session.user,
-                credit: data.credit
-              }
-            });
+          if (response.ok && data.user) {
+            setUserCredit(data.user.credit);
           }
-          
-          console.log('Kredi güncellendi:', data.credit);
-        } else {
-          console.error('Kredi verisi bulunamadı:', data);
+        } catch (error) {
+          console.error('Kredi bilgisi alınamadı:', error);
         }
-      } catch (error) {
-        console.error('Kredi bilgisi alınamadı:', error);
-        // 3 saniye sonra tekrar dene
-        setTimeout(() => {
-          if (session?.user?.id) {
-            fetchCredit();
-          }
-        }, 3000);
       }
     };
 
-    if (session?.user?.id) {
-      fetchCredit();
-    }
-  }, [session?.user?.id, update]);
+    fetchUserCredit();
+  }, [session]);
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' });
@@ -167,6 +135,9 @@ export function Header() {
                 <Popover className="relative">
                   <Popover.Button className={`flex items-center gap-x-1 text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
                     Kredi İşlemleri
+                    <span className="ml-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
+                      {userCredit}
+                    </span>
                     <CurrencyDollarIcon className="h-5 w-5" aria-hidden="true" />
                   </Popover.Button>
 
@@ -242,7 +213,7 @@ export function Header() {
                           {session.user?.email}
                         </span>
                         <span className="text-sm text-blue-500 font-semibold">
-                          {credit} Kredi
+                          {session.user?.credit || 0} Kredi
                         </span>
                       </div>
                     </Popover.Button>
@@ -357,7 +328,7 @@ export function Header() {
                                 {session.user?.email}
                               </p>
                               <p className="text-sm text-blue-500 font-semibold">
-                                {credit} Kredi
+                                {session.user?.credit || 0} Kredi
                               </p>
                             </div>
                           </div>

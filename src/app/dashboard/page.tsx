@@ -1,59 +1,51 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useTheme } from '@/app/ThemeContext';
+import { getServerSession } from 'next-auth/next';
+import { redirect } from 'next/navigation';
+import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
+import dbConnect from '@/lib/dbConnect';
+import User from '@/models/User';
+import Approval from '@/models/Approval';
+import CreditTransaction from '@/models/CreditTransaction';
 
-export default function DashboardPage() {
-  const { data: session, update } = useSession();
-  const router = useRouter();
-  const { theme } = useTheme();
-  const [credit, setCredit] = useState(0);
-  const [totalApprovals, setTotalApprovals] = useState(0);
-  const [loading, setLoading] = useState(true);
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Kredi bilgisini al
-        const creditResponse = await fetch('/api/users/me');
-        const creditData = await creditResponse.json();
-        
-        if (creditResponse.ok) {
-          setCredit(creditData.credit);
-          await update({ ...session, user: { ...session?.user, credit: creditData.credit } });
-        }
-
-        // Onay sayısını al
-        const approvalsResponse = await fetch('/api/approvals/count');
-        const approvalsData = await approvalsResponse.json();
-        
-        if (approvalsResponse.ok) {
-          setTotalApprovals(approvalsData.count);
-        }
-      } catch (error) {
-        console.error('Veri yükleme hatası:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (session) {
-      fetchData();
-    } else {
-      router.push('/auth/login');
-    }
-  }, [session]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-      </div>
-    );
+  if (!session) {
+    redirect('/auth/login');
   }
+
+  await dbConnect();
+  
+  // Kullanıcı bilgilerini ve kredi bakiyesini getir
+  const user = await User.findById(session.user.id);
+  
+  // Toplam onay sayısını getir
+  const totalApprovals = await Approval.countDocuments({ userId: session.user.id });
+
+  // Son işlemi getir
+  const lastTransaction = await CreditTransaction.findOne({ userId: session.user.id })
+    .sort({ createdAt: -1 })
+    .select('type amount createdAt');
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getTransactionTypeText = (type: string) => {
+    const types: { [key: string]: string } = {
+      deposit: 'Yükleme',
+      usage: 'Kullanım',
+      coupon: 'Kupon',
+      refund: 'İade'
+    };
+    return types[type] || type;
+  };
 
   return (
     <div className="py-6 sm:px-6 lg:px-8">
@@ -61,7 +53,7 @@ export default function DashboardPage() {
         {/* Üst Bilgi Kartları */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {/* Kredi Bakiyesi */}
-          <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} overflow-hidden shadow rounded-lg`}>
+          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -71,12 +63,12 @@ export default function DashboardPage() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
-                    <dt className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} truncate`}>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                       Kredi Bakiyesi
                     </dt>
                     <dd className="flex items-baseline">
-                      <div className={`text-2xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        {credit}
+                      <div className="text-2xl font-semibold text-gray-900 dark:text-white">
+                        {user?.credit || 0}
                       </div>
                       <div className="ml-2">
                         <span className="text-sm font-medium text-green-500">Kredi</span>
@@ -86,7 +78,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-5 py-3`}>
+            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-3">
               <div className="text-sm">
                 <Link href="/dashboard/credits/add" className="font-medium text-blue-500 hover:text-blue-600">
                   Kredi Yükle
@@ -145,9 +137,18 @@ export default function DashboardPage() {
                       Son İşlem
                     </dt>
                     <dd className="flex items-baseline">
-                      <div className="text-2xl font-semibold text-gray-900 dark:text-white">
-                        -
-                      </div>
+                      {lastTransaction ? (
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {getTransactionTypeText(lastTransaction.type)}: {lastTransaction.amount} Kredi
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {formatDate(lastTransaction.createdAt)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          İşlem bulunamadı
+                        </div>
+                      )}
                     </dd>
                   </dl>
                 </div>
