@@ -19,6 +19,7 @@ import {
   UserCircleIcon,
   ClockIcon,
   ChartBarIcon,
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -28,9 +29,9 @@ import { useCreditStore } from '@/store/creditStore';
 const products = [
   {
     name: 'Onay Numarası Al',
-    description: 'IID numaranız ile hızlıca onay alın',
+    description: 'IID numaranızı girerek hemen onay numaranızı alın',
     href: '/dashboard/approvals/new',
-    icon: CreditCardIcon,
+    icon: CheckCircleIcon,
   },
   {
     name: 'Onay Geçmişi',
@@ -42,7 +43,8 @@ const products = [
     name: 'Kredi Yükle',
     description: 'Hesabınıza kredi yükleyerek onay işlemlerinizi gerçekleştirin',
     href: '/dashboard/credits/add',
-    icon: CurrencyDollarIcon,
+    icon: CreditCardIcon,
+    highlight: true,
   },
   {
     name: 'Destek Al',
@@ -54,16 +56,10 @@ const products = [
 
 const userMenuItems = [
   {
-    name: 'Müşteri Paneli',
-    description: 'Genel bakış ve istatistikler',
-    href: '/dashboard',
-    icon: ChartBarIcon,
-  },
-  {
     name: 'Onay Numarası Al',
-    description: 'IID numaranız ile hızlıca onay alın',
+    description: 'IID numaranızı girerek hemen onay numaranızı alın',
     href: '/dashboard/approvals/new',
-    icon: CreditCardIcon,
+    icon: CheckCircleIcon,
   },
   {
     name: 'Onay Geçmişi',
@@ -75,7 +71,8 @@ const userMenuItems = [
     name: 'Kredi Yükle',
     description: 'Bakiyenizi artırın',
     href: '/dashboard/credits/add',
-    icon: CurrencyDollarIcon,
+    icon: CreditCardIcon,
+    highlight: true,
   },
   {
     name: 'Destek Al',
@@ -145,10 +142,7 @@ export function Header() {
                 <div className="relative group">
                   <button className={`flex items-center gap-x-1 text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
                     Onay İşlemleri
-                    <span className="ml-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
-                      {credit}
-                    </span>
-                    <CurrencyDollarIcon className="h-5 w-5" aria-hidden="true" />
+                    <CheckCircleIcon className="h-5 w-5 ml-1" aria-hidden="true" />
                   </button>
 
                   <div className={`absolute left-1/2 z-10 mt-3 w-screen max-w-md -translate-x-1/2 transform px-2 sm:px-0 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200`}>
@@ -162,7 +156,7 @@ export function Header() {
                               theme === 'dark' 
                                 ? 'hover:bg-gray-700' 
                                 : 'hover:bg-gray-50'
-                            }`}
+                            } ${item.highlight ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                           >
                             <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
                             <div className="ml-4">
@@ -316,9 +310,6 @@ export function Header() {
                             <div>
                               <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                                 {session.user?.email}
-                              </p>
-                              <p className="text-sm text-blue-500 font-semibold">
-                                {credit} Kredi
                               </p>
                             </div>
                           </div>
