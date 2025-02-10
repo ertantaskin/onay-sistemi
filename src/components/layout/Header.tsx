@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect } from 'react';
 import { useTheme } from '@/app/ThemeContext';
 import { Popover, Transition } from '@headlessui/react';
 import {
@@ -23,6 +23,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
+import { useCreditStore } from '@/store/creditStore';
 
 const products = [
   {
@@ -73,26 +74,13 @@ function classNames(...classes: string[]) {
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const { data: session } = useSession();
-  const [userCredit, setUserCredit] = useState<number>(0);
+  const { credit, updateCredit } = useCreditStore();
 
   useEffect(() => {
-    const fetchUserCredit = async () => {
-      if (session) {
-        try {
-          const response = await fetch('/api/users/me');
-          const data = await response.json();
-          
-          if (response.ok && data.user) {
-            setUserCredit(data.user.credit);
-          }
-        } catch (error) {
-          console.error('Kredi bilgisi alınamadı:', error);
-        }
-      }
-    };
-
-    fetchUserCredit();
-  }, [session]);
+    if (session) {
+      updateCredit();
+    }
+  }, [session, updateCredit]);
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' });
@@ -140,7 +128,7 @@ export function Header() {
                   <Popover.Button className={`flex items-center gap-x-1 text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
                     Kredi İşlemleri
                     <span className="ml-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full">
-                      {userCredit}
+                      {credit}
                     </span>
                     <CurrencyDollarIcon className="h-5 w-5" aria-hidden="true" />
                   </Popover.Button>
@@ -217,7 +205,7 @@ export function Header() {
                           {session.user?.email}
                         </span>
                         <span className="text-sm text-blue-500 font-semibold">
-                          {session.user?.credit || 0} Kredi
+                          {credit} Kredi
                         </span>
                       </div>
                     </Popover.Button>
@@ -332,7 +320,7 @@ export function Header() {
                                 {session.user?.email}
                               </p>
                               <p className="text-sm text-blue-500 font-semibold">
-                                {session.user?.credit || 0} Kredi
+                                {credit} Kredi
                               </p>
                             </div>
                           </div>

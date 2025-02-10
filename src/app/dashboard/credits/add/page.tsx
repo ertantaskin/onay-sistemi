@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { CreditCardIcon, GiftIcon } from '@heroicons/react/24/outline';
+import { useCreditStore } from '@/store/creditStore';
 
 const creditOptions = [
   { value: 100, label: '100 Kredi', price: '50 TL' },
@@ -20,6 +21,7 @@ export default function AddCreditPage() {
   const [selectedCredit, setSelectedCredit] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('credit_card');
   const [couponCode, setCouponCode] = useState('');
+  const { updateCredit } = useCreditStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +56,8 @@ export default function AddCreditPage() {
         throw new Error(data.error || 'Kredi yükleme işlemi başarısız oldu.');
       }
 
+      await updateCredit();
+      
       toast.success('Kredi yükleme işlemi başarılı!');
       router.push('/dashboard');
       router.refresh();

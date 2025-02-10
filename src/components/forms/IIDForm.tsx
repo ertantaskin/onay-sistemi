@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import axios, { AxiosError } from 'axios';
 import { useTheme } from '@/app/ThemeContext';
 import { useRouter } from 'next/navigation';
+import { useCreditStore } from '@/store/creditStore';
 
 interface ApiResponse {
   short_result: string;
@@ -32,6 +33,7 @@ export function IIDForm() {
     showConfirmation?: boolean;
   } | null>(null);
   const router = useRouter();
+  const { updateCredit } = useCreditStore();
 
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, 9);
@@ -97,7 +99,6 @@ export function IIDForm() {
           });
           toast.error('Geçersiz IID numarası');
         } else {
-          // Önce veritabanına kaydet
           try {
             const saveResponse = await fetch('/api/approvals/create', {
               method: 'POST',
@@ -121,7 +122,6 @@ export function IIDForm() {
               });
               toast.error(saveData.error || 'Onay kaydı başarısız oldu');
               
-              // Yetersiz kredi durumunda kredi yükleme sayfasına yönlendir
               if (saveResponse.status === 402) {
                 setTimeout(() => {
                   router.push('/dashboard/credits/add');
@@ -130,7 +130,9 @@ export function IIDForm() {
               return;
             }
 
-            // Başarılı kayıt durumu
+            // Kredi bakiyesini güncelle
+            await updateCredit();
+
             setResult({
               status: 'success',
               data: apiResponse,
