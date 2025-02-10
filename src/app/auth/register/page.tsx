@@ -74,6 +74,26 @@ export default function RegisterPage() {
   return (
     <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
+        {error && (
+          <div className="mb-4 p-4 rounded-xl bg-red-500/10 backdrop-blur-xl border border-red-500/20 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-500/10 rounded-lg">
+                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className={`text-sm font-medium ${theme === 'dark' ? 'text-red-400' : 'text-red-800'}`}>
+                  Kayıt Başarısız
+                </h3>
+                <p className={`text-sm ${theme === 'dark' ? 'text-red-300' : 'text-red-600'}`}>
+                  {error}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="text-center relative">
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br from-green-500/30 via-green-400/20 to-green-300/10 rounded-full shadow-xl transform -rotate-12 blur-[64px]"></div>
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-32 h-32 bg-gradient-to-br from-green-400/30 via-green-500/20 to-green-600/10 rounded-full shadow-xl transform rotate-12 blur-[64px]"></div>
@@ -186,11 +206,12 @@ export default function RegisterPage() {
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className={`appearance-none block w-full px-4 py-3 border rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm transition-all duration-200 ${
-                    error ? 'border-red-500 focus:ring-red-500' :
-                    theme === 'dark' 
-                      ? 'bg-gray-700/50 border-gray-600 text-white hover:bg-gray-700/70 focus:bg-gray-700' 
-                      : 'bg-gray-50/50 border-gray-300 text-gray-900 hover:bg-gray-50/70 focus:bg-white'
+                  className={`appearance-none block w-full px-4 py-3 border rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm transition-all duration-200 ${
+                    error 
+                      ? 'border-red-500/50 bg-red-500/5 focus:ring-red-500 dark:border-red-500/30 dark:bg-red-500/10' 
+                      : theme === 'dark'
+                        ? 'bg-gray-700/50 border-gray-600 text-white hover:bg-gray-700/70 focus:bg-gray-700 focus:ring-green-500' 
+                        : 'bg-gray-50/50 border-gray-300 text-gray-900 hover:bg-gray-50/70 focus:bg-white focus:ring-green-500'
                   }`}
                   placeholder="••••••••"
                 />
@@ -198,9 +219,11 @@ export default function RegisterPage() {
                   type="button"
                   onClick={togglePasswordVisibility}
                   className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-colors duration-200 ${
-                    theme === 'dark'
-                      ? 'text-gray-400 hover:text-gray-300'
-                      : 'text-gray-600 hover:text-gray-800'
+                    error
+                      ? theme === 'dark' ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-700'
+                      : theme === 'dark'
+                        ? 'text-gray-400 hover:text-gray-300'
+                        : 'text-gray-600 hover:text-gray-800'
                   }`}
                 >
                   {showPassword ? (
@@ -225,11 +248,12 @@ export default function RegisterPage() {
                   required
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  className={`appearance-none block w-full px-4 py-3 border rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm transition-all duration-200 ${
-                    error ? 'border-red-500 focus:ring-red-500' :
-                    theme === 'dark' 
-                      ? 'bg-gray-700/50 border-gray-600 text-white hover:bg-gray-700/70 focus:bg-gray-700' 
-                      : 'bg-gray-50/50 border-gray-300 text-gray-900 hover:bg-gray-50/70 focus:bg-white'
+                  className={`appearance-none block w-full px-4 py-3 border rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 sm:text-sm transition-all duration-200 ${
+                    error 
+                      ? 'border-red-500/50 bg-red-500/5 focus:ring-red-500 dark:border-red-500/30 dark:bg-red-500/10' 
+                      : theme === 'dark'
+                        ? 'bg-gray-700/50 border-gray-600 text-white hover:bg-gray-700/70 focus:bg-gray-700 focus:ring-green-500' 
+                        : 'bg-gray-50/50 border-gray-300 text-gray-900 hover:bg-gray-50/70 focus:bg-white focus:ring-green-500'
                   }`}
                   placeholder="••••••••"
                 />
@@ -237,9 +261,11 @@ export default function RegisterPage() {
                   type="button"
                   onClick={toggleConfirmPasswordVisibility}
                   className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-colors duration-200 ${
-                    theme === 'dark'
-                      ? 'text-gray-400 hover:text-gray-300'
-                      : 'text-gray-600 hover:text-gray-800'
+                    error
+                      ? theme === 'dark' ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-700'
+                      : theme === 'dark'
+                        ? 'text-gray-400 hover:text-gray-300'
+                        : 'text-gray-600 hover:text-gray-800'
                   }`}
                 >
                   {showConfirmPassword ? (
@@ -248,11 +274,6 @@ export default function RegisterPage() {
                     <EyeIcon className="h-5 w-5" />
                   )}
                 </button>
-                {error && (
-                  <div className="absolute -bottom-6 left-0 text-sm text-red-500 mt-1">
-                    {error}
-                  </div>
-                )}
               </div>
             </div>
 
