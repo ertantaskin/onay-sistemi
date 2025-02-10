@@ -24,13 +24,16 @@ export function CreditInfo() {
 
   const fetchRecentTransactions = async () => {
     try {
-      const response = await fetch('/api/credits/history?page=1&limit=3');
+      const response = await fetch('/api/credits/history?page=1&limit=10');
       const data = await response.json();
       
       if (response.ok) {
-        const loadingTransactions = data.transactions.filter(
-          (t: CreditTransaction) => ['purchase', 'coupon', 'deposit'].includes(t.type)
-        ).slice(0, 3);
+        const loadingTransactions = data.transactions
+          .filter((t: CreditTransaction) => ['purchase', 'coupon', 'deposit'].includes(t.type))
+          .sort((a: CreditTransaction, b: CreditTransaction) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+          .slice(0, 3);
         setRecentTransactions(loadingTransactions);
       }
     } catch (error) {
