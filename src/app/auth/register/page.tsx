@@ -6,11 +6,15 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useTheme } from '@/app/ThemeContext';
 import Image from 'next/image';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -21,8 +25,10 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
     if (formData.password !== formData.confirmPassword) {
+      setError('Şifreler eşleşmiyor!');
       toast.error('Şifreler eşleşmiyor!');
       setLoading(false);
       return;
@@ -50,10 +56,19 @@ export default function RegisterPage() {
       toast.success('Kayıt başarılı! Giriş yapabilirsiniz.');
       router.push('/auth/login');
     } catch (error) {
+      setError(error instanceof Error ? error.message : 'Bir hata oluştu. Lütfen tekrar deneyin.');
       toast.error(error instanceof Error ? error.message : 'Bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
   };
 
   return (
@@ -162,29 +177,82 @@ export default function RegisterPage() {
               <label htmlFor="password" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 Şifre
               </label>
-              <div className="mt-1 relative">
+              <div className="mt-1 relative group">
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className={`appearance-none block w-full px-4 py-3 border rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm transition-all duration-200 ${
+                    error ? 'border-red-500 focus:ring-red-500' :
                     theme === 'dark' 
                       ? 'bg-gray-700/50 border-gray-600 text-white hover:bg-gray-700/70 focus:bg-gray-700' 
                       : 'bg-gray-50/50 border-gray-300 text-gray-900 hover:bg-gray-50/70 focus:bg-white'
                   }`}
                   placeholder="••••••••"
                 />
-                <div className={`absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none ${
-                  formData.password ? 'opacity-100' : 'opacity-0'
-                } transition-opacity duration-200`}>
-                  <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h14a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-colors duration-200 ${
+                    theme === 'dark'
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                Şifre Tekrar
+              </label>
+              <div className="mt-1 relative group">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  className={`appearance-none block w-full px-4 py-3 border rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 sm:text-sm transition-all duration-200 ${
+                    error ? 'border-red-500 focus:ring-red-500' :
+                    theme === 'dark' 
+                      ? 'bg-gray-700/50 border-gray-600 text-white hover:bg-gray-700/70 focus:bg-gray-700' 
+                      : 'bg-gray-50/50 border-gray-300 text-gray-900 hover:bg-gray-50/70 focus:bg-white'
+                  }`}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={toggleConfirmPasswordVisibility}
+                  className={`absolute inset-y-0 right-0 pr-3 flex items-center transition-colors duration-200 ${
+                    theme === 'dark'
+                      ? 'text-gray-400 hover:text-gray-300'
+                      : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  {showConfirmPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+                {error && (
+                  <div className="absolute -bottom-6 left-0 text-sm text-red-500 mt-1">
+                    {error}
+                  </div>
+                )}
               </div>
             </div>
 
