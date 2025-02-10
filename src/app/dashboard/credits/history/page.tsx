@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { CurrencyDollarIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { useTheme } from '@/app/ThemeContext';
+import { useCreditStore } from '@/store/creditStore';
 
 interface CreditTransaction {
   id: string;
@@ -18,6 +22,8 @@ interface CreditTransaction {
 export default function CreditHistoryPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { theme } = useTheme();
+  const { credit } = useCreditStore();
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -99,7 +105,31 @@ export default function CreditHistoryPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        {/* Kredi Bilgisi */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Kredi Bilgisi</h2>
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+              <CurrencyDollarIcon className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-gray-600 dark:text-gray-300 mb-1">Mevcut Krediniz</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{credit} Kredi</p>
+            </div>
+            <Link
+              href="/dashboard/credits/add"
+              className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+            >
+              Kredi Yükle
+              <ArrowRightIcon className="ml-2 h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Kredi Geçmişi */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mt-8">
           <div className="p-6">
             <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
               Kredi Geçmişi
