@@ -32,6 +32,8 @@ const products = [
     description: 'IID numaranızı girerek hemen onay numaranızı alın',
     href: '/dashboard/approvals/new',
     icon: CheckCircleIcon,
+    highlight: true,
+    highlightColor: 'green',
   },
   {
     name: 'Onay Geçmişi',
@@ -45,6 +47,7 @@ const products = [
     href: '/dashboard/credits/add',
     icon: CreditCardIcon,
     highlight: true,
+    highlightColor: 'blue',
   },
   {
     name: 'Destek Al',
@@ -151,18 +154,52 @@ export function Header() {
                           <Link
                             key={item.name}
                             href={item.href}
-                            className={`-m-3 flex items-start rounded-lg p-3 ${
+                            className={`-m-3 flex items-start rounded-lg p-3 transition-all duration-200 ${
                               theme === 'dark' 
                                 ? 'hover:bg-gray-700' 
                                 : 'hover:bg-gray-50'
-                            } ${item.highlight ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+                            } ${
+                              item.highlight
+                                ? item.highlightColor === 'blue'
+                                  ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 ring-1 ring-blue-500/20 dark:ring-blue-400/20'
+                                  : 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 ring-1 ring-green-500/20 dark:ring-green-400/20'
+                                : ''
+                            }`}
                           >
-                            <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
+                            <item.icon 
+                              className={`h-6 w-6 flex-shrink-0 ${
+                                item.highlight
+                                  ? item.highlightColor === 'blue'
+                                    ? 'text-blue-600 dark:text-blue-400'
+                                    : 'text-green-600 dark:text-green-400'
+                                  : theme === 'dark'
+                                    ? 'text-blue-400'
+                                    : 'text-blue-600'
+                              }`}
+                              aria-hidden="true"
+                            />
                             <div className="ml-4">
                               <p className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                                 {item.name}
+                                {item.highlight && (
+                                  <span className={`ml-2 inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
+                                    item.highlightColor === 'blue'
+                                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                                      : 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                                  }`}>
+                                    Önerilen
+                                  </span>
+                                )}
                               </p>
-                              <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                              <p className={`mt-1 text-sm ${
+                                item.highlight
+                                  ? item.highlightColor === 'blue'
+                                    ? 'text-blue-600 dark:text-blue-300'
+                                    : 'text-green-600 dark:text-green-300'
+                                  : theme === 'dark'
+                                    ? 'text-gray-400'
+                                    : 'text-gray-500'
+                              }`}>
                                 {item.description}
                               </p>
                             </div>
