@@ -74,7 +74,7 @@ export function RecentApprovals() {
                 <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                   Tarih
                 </th>
-                <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider hidden sm:table-cell`}>
+                <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
                   Onay Numarası
                 </th>
                 <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
@@ -95,12 +95,12 @@ export function RecentApprovals() {
                     <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
                       {formatDate(approval.createdAt)}
                     </td>
-                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm font-mono hidden sm:table-cell ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
-                      <div className="flex items-center space-x-2">
-                        <span>{approval.confirmationNumber}</span>
+                    <td className={`px-3 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                        <span className="break-all sm:break-normal">{approval.confirmationNumber}</span>
                         <button
                           onClick={() => handleCopy(approval.confirmationNumber)}
-                          className={`inline-flex items-center p-1.5 rounded-lg transition-all duration-200 ${
+                          className={`inline-flex items-center p-1.5 rounded-lg transition-all duration-200 self-start sm:self-center ${
                             theme === 'dark'
                               ? 'text-blue-400 hover:bg-gray-700 hover:text-blue-300'
                               : 'text-blue-600 hover:bg-gray-100 hover:text-blue-700'
