@@ -299,16 +299,16 @@ export function IIDForm() {
                     ? 'bg-gray-800/50 ring-1 ring-green-500/20' 
                     : 'bg-white/80 ring-1 ring-green-500/30'
                 }`}>
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex-1">
                       <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                         Onay Numaranız
                       </p>
-                      <p className={`mt-1 text-xl font-mono tracking-wider truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      <p className={`mt-1 text-xl font-mono tracking-wider break-all ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         {result.data.confirmation_id_with_dash}
                       </p>
                     </div>
-                    <div className="ml-4">
+                    <div className="flex-shrink-0">
                       <button
                         onClick={() => handleCopy(result.data.confirmation_id_with_dash)}
                         className={`p-2.5 rounded-lg transition-all duration-200 ${
