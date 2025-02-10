@@ -138,11 +138,6 @@ export function IIDForm() {
               showConfirmation: true
             });
             toast.success('Onay numarası başarıyla alındı ve kaydedildi!');
-
-            // Başarılı kayıt sonrası 2 saniye bekleyip geçmiş sayfasına yönlendir
-            setTimeout(() => {
-              router.push('/dashboard/approvals/history');
-            }, 2000);
           } catch (error) {
             console.error('Onay kaydı hatası:', error);
             setResult({
