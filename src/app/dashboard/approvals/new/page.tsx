@@ -1,6 +1,7 @@
 'use client';
 
 import { IIDForm } from '@/components/forms/IIDForm';
+import { RecentApprovals } from '@/components/dashboard/RecentApprovals';
 
 export default function NewApprovalPage() {
   return (
@@ -16,6 +17,8 @@ export default function NewApprovalPage() {
         </div>
         <IIDForm />
       </div>
+      
+      <RecentApprovals />
     </div>
   );
 } 
