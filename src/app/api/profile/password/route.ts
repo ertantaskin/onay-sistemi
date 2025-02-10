@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
-import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
+import { hash, compare } from 'bcryptjs';
 
-export async function PATCH(req: Request) {
+export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -20,7 +19,7 @@ export async function PATCH(req: Request) {
 
     if (!currentPassword || !newPassword) {
       return NextResponse.json(
-        { error: 'Mevcut şifre ve yeni şifre zorunludur.' },
+        { error: 'Mevcut şifre ve yeni şifre gereklidir.' },
         { status: 400 }
       );
     }
@@ -32,10 +31,11 @@ export async function PATCH(req: Request) {
       );
     }
 
-    await dbConnect();
+    // Kullanıcıyı bul
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
 
-    // Kullanıcıyı bul ve şifresini kontrol et
-    const user = await User.findById(session.user.id).select('+password');
     if (!user) {
       return NextResponse.json(
         { error: 'Kullanıcı bulunamadı.' },
@@ -44,8 +44,9 @@ export async function PATCH(req: Request) {
     }
 
     // Mevcut şifreyi kontrol et
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isPasswordValid) {
+    const isValid = await compare(currentPassword, user.password);
+
+    if (!isValid) {
       return NextResponse.json(
         { error: 'Mevcut şifre yanlış.' },
         { status: 400 }
@@ -53,16 +54,16 @@ export async function PATCH(req: Request) {
     }
 
     // Yeni şifreyi hashle
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await hash(newPassword, 12);
 
     // Şifreyi güncelle
-    await User.findByIdAndUpdate(session.user.id, {
-      password: hashedPassword,
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { password: hashedPassword }
     });
 
     return NextResponse.json({
-      message: 'Şifre başarıyla güncellendi.',
+      message: 'Şifreniz başarıyla güncellendi.'
     });
   } catch (error) {
     console.error('Şifre güncelleme hatası:', error);

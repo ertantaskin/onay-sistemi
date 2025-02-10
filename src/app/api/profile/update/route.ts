@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import dbConnect from '@/lib/dbConnect';
-import User from '@/models/User';
+import { prisma } from '@/lib/prisma';
 
 export async function PATCH(req: Request) {
   try {
@@ -15,49 +14,32 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { name, email } = await req.json();
+    const { name } = await req.json();
 
-    if (!name || !email) {
+    if (!name) {
       return NextResponse.json(
-        { error: 'Ad ve email alanları zorunludur.' },
+        { error: 'İsim alanı gereklidir.' },
         { status: 400 }
       );
     }
 
-    await dbConnect();
-
-    // Email değiştiriliyorsa, yeni email'in başka kullanıcı tarafından kullanılıp kullanılmadığını kontrol et
-    if (email !== session.user.email) {
-      const existingUser = await User.findOne({ email, _id: { $ne: session.user.id } });
-      if (existingUser) {
-        return NextResponse.json(
-          { error: 'Bu email adresi başka bir kullanıcı tarafından kullanılıyor.' },
-          { status: 400 }
-        );
-      }
-    }
-
     // Kullanıcıyı güncelle
-    const updatedUser = await User.findByIdAndUpdate(
-      session.user.id,
-      { name, email },
-      { new: true }
-    ).select('-password');
-
-    if (!updatedUser) {
-      return NextResponse.json(
-        { error: 'Kullanıcı bulunamadı.' },
-        { status: 404 }
-      );
-    }
+    const user = await prisma.user.update({
+      where: { id: session.user.id },
+      data: { name },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        credit: true,
+        role: true,
+        createdAt: true
+      }
+    });
 
     return NextResponse.json({
       message: 'Profil başarıyla güncellendi.',
-      user: {
-        id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-      },
+      user
     });
   } catch (error) {
     console.error('Profil güncelleme hatası:', error);
