@@ -21,6 +21,14 @@ interface ApiResponse {
   had_occurred: boolean;
 }
 
+interface Approval {
+  id: string;
+  confirmationNumber: string;
+  iidNumber: string;
+  status: string;
+  createdAt: string;
+}
+
 export function IIDForm() {
   const { theme } = useTheme();
   const [iidParts, setIidParts] = useState<string[]>(Array(9).fill(''));
@@ -34,10 +42,35 @@ export function IIDForm() {
   } | null>(null);
   const router = useRouter();
   const { updateCredit } = useCreditStore();
+  const [recentApprovals, setRecentApprovals] = useState<Approval[]>([]);
 
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, 9);
+    fetchRecentApprovals();
   }, []);
+
+  const fetchRecentApprovals = async () => {
+    try {
+      const response = await fetch('/api/approvals/history?page=1&limit=10');
+      const data = await response.json();
+      
+      if (response.ok) {
+        setRecentApprovals(data.approvals);
+      }
+    } catch (error) {
+      console.error('Son onaylar alınamadı:', error);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Intl.DateTimeFormat('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(dateString));
+  };
 
   const handleInputChange = (index: number, value: string) => {
     const newValue = value.replace(/[^0-9]/g, '').slice(0, 7);
@@ -292,27 +325,29 @@ export function IIDForm() {
                     : 'bg-white/80 ring-1 ring-green-500/30'
                 }`}>
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                         Onay Numaranız
                       </p>
-                      <p className={`mt-1 text-xl font-mono tracking-wider ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      <p className={`mt-1 text-xl font-mono tracking-wider truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         {result.data.confirmation_id_with_dash}
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleCopy(result.data.confirmation_id_with_dash)}
-                      className={`p-2.5 rounded-lg transition-all duration-200 ${
-                        theme === 'dark'
-                          ? 'bg-gray-700/50 text-blue-400 hover:bg-gray-700 hover:text-blue-300'
-                          : 'bg-gray-50 text-blue-600 hover:bg-gray-100 hover:text-blue-700'
-                      }`}
-                      title="Kopyala"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                      </svg>
-                    </button>
+                    <div className="ml-4">
+                      <button
+                        onClick={() => handleCopy(result.data.confirmation_id_with_dash)}
+                        className={`p-2.5 rounded-lg transition-all duration-200 ${
+                          theme === 'dark'
+                            ? 'bg-gray-700/50 text-blue-400 hover:bg-gray-700 hover:text-blue-300'
+                            : 'bg-gray-50 text-blue-600 hover:bg-gray-100 hover:text-blue-700'
+                        }`}
+                        title="Kopyala"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -320,6 +355,83 @@ export function IIDForm() {
           </div>
         </div>
       )}
+
+      {/* Son 10 Onay İşlemi */}
+      <div className="mt-12">
+        <h2 className={`text-xl font-semibold mb-6 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          Son Onay İşlemleri
+        </h2>
+        <div className="overflow-hidden rounded-xl shadow-lg">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <tr>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    Tarih
+                  </th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    Onay Numarası
+                  </th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    Durum
+                  </th>
+                  <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase tracking-wider`}>
+                    İşlem
+                  </th>
+                </tr>
+              </thead>
+              <tbody className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} divide-y divide-gray-200 dark:divide-gray-700`}>
+                {recentApprovals.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className={`px-6 py-4 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Henüz onay işlemi bulunmuyor.
+                    </td>
+                  </tr>
+                ) : (
+                  recentApprovals.map((approval) => (
+                    <tr key={approval.id} className={`${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+                        {formatDate(approval.createdAt)}
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+                        {approval.confirmationNumber}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          approval.status === 'completed' || approval.status === 'success'
+                            ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                            : approval.status === 'pending'
+                            ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                            : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                        }`}>
+                          {approval.status === 'completed' || approval.status === 'success' ? 'Tamamlandı'
+                            : approval.status === 'pending' ? 'Bekliyor'
+                            : 'Başarısız'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleCopy(approval.confirmationNumber)}
+                          className={`p-1.5 rounded-lg transition-all duration-200 ${
+                            theme === 'dark'
+                              ? 'text-blue-400 hover:bg-gray-700 hover:text-blue-300'
+                              : 'text-blue-600 hover:bg-gray-100 hover:text-blue-700'
+                          }`}
+                          title="Kopyala"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 } 
