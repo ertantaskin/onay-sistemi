@@ -14,7 +14,7 @@ interface CreditTransaction {
 
 export function CreditInfo() {
   const { theme } = useTheme();
-  const { credit } = useCreditStore();
+  const { credits } = useCreditStore();
   const [recentTransactions, setRecentTransactions] = useState<CreditTransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -84,7 +84,7 @@ export function CreditInfo() {
         <div>
           <p className="text-gray-600 dark:text-gray-300 mb-1">Mevcut Krediniz</p>
           <div className="flex items-center gap-4">
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{credit} Kredi</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">{credits} Kredi</p>
             <button
               onClick={scrollToAddCredit}
               className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"

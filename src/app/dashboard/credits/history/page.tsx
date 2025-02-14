@@ -23,7 +23,7 @@ export default function CreditHistoryPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const { theme } = useTheme();
-  const { credit } = useCreditStore();
+  const { credits } = useCreditStore();
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -116,7 +116,9 @@ export default function CreditHistoryPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <p className="text-gray-600 dark:text-gray-300 mb-1">Mevcut Krediniz</p>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">{credit} Kredi</p>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                {credits} Kredi
+              </div>
             </div>
             <Link
               href="/dashboard/credits/add"

@@ -1,83 +1,56 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getToken } from 'next-auth/jwt';
 import { prisma } from '@/lib/prisma';
+import { NextRequest } from 'next/server';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
-        { status: 401 }
-      );
+    const token = await getToken({ req });
+
+    if (!token || token.role !== 'admin') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    if (session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Bu işlem için admin yetkisi gerekiyor.' },
-        { status: 403 }
-      );
-    }
+    // Tüm istatistikleri paralel olarak al
+    const [totalUsers, totalCredits, totalApprovals, recentTransactions] =
+      await Promise.all([
+        // Toplam kullanıcı sayısı
+        prisma.user.count(),
 
-    // Toplam kullanıcı sayısı
-    const totalUsers = await prisma.user.count();
+        // Toplam kredi miktarı
+        prisma.user.aggregate({
+          _sum: {
+            credits: true,
+          },
+        }),
 
-    // Toplam onay sayısı
-    const totalApprovals = await prisma.approval.count();
+        // Toplam onay sayısı
+        prisma.approval.count(),
 
-    // Toplam kredi işlemi
-    const totalTransactions = await prisma.creditTransaction.count();
-
-    // Son 7 günlük istatistikler
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    const recentStats = await prisma.$transaction([
-      // Son 7 günlük yeni kullanıcılar
-      prisma.user.count({
-        where: {
-          createdAt: {
-            gte: sevenDaysAgo
-          }
-        }
-      }),
-      // Son 7 günlük onaylar
-      prisma.approval.count({
-        where: {
-          createdAt: {
-            gte: sevenDaysAgo
-          }
-        }
-      }),
-      // Son 7 günlük kredi işlemleri
-      prisma.creditTransaction.count({
-        where: {
-          createdAt: {
-            gte: sevenDaysAgo
-          }
-        }
-      })
-    ]);
+        // Son kredi işlemleri
+        prisma.creditTransaction.findMany({
+          take: 20,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          include: {
+            user: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        }),
+      ]);
 
     return NextResponse.json({
-      totalStats: {
-        users: totalUsers,
-        approvals: totalApprovals,
-        transactions: totalTransactions
-      },
-      recentStats: {
-        newUsers: recentStats[0],
-        newApprovals: recentStats[1],
-        newTransactions: recentStats[2]
-      }
+      totalUsers,
+      totalCredits: totalCredits._sum?.credits || 0,
+      totalApprovals,
+      recentTransactions,
     });
   } catch (error) {
-    console.error('İstatistik hatası:', error);
-    return NextResponse.json(
-      { error: 'İstatistikler alınırken bir hata oluştu.' },
-      { status: 500 }
-    );
+    console.error('İstatistikler yüklenirken hata:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

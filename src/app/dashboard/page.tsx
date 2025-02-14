@@ -125,7 +125,7 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 dark:text-gray-300">Mevcut Krediniz</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{user?.credit || 0} Kredi</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{user?.credits || 0} Kredi</p>
               </div>
               <Link
                 href="/dashboard/credits/history"

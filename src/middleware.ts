@@ -6,6 +6,19 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
 
+  // Admin paneli için kontrol
+  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+    if (!token) {
+      const url = new URL('/admin/login', request.url);
+      url.searchParams.set('callbackUrl', encodeURI(pathname));
+      return NextResponse.redirect(url);
+    }
+    
+    if (token.role !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
   // Dashboard ve alt sayfaları için kontrol
   if (pathname.startsWith('/dashboard')) {
     if (!token) {
@@ -21,5 +34,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/admin/:path*',
   ],
 }; 

@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE "Approval" ALTER COLUMN "code" DROP DEFAULT,
+ALTER COLUMN "iid" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "Coupon" ALTER COLUMN "amount" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "CouponUsage" ALTER COLUMN "usedAmount" DROP DEFAULT;

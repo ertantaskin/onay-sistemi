@@ -41,7 +41,7 @@ export function IIDForm() {
     showConfirmation?: boolean;
   } | null>(null);
   const router = useRouter();
-  const { updateCredit } = useCreditStore();
+  const { updateCredits } = useCreditStore();
 
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, 9);
@@ -139,7 +139,7 @@ export function IIDForm() {
             }
 
             // Kredi bakiyesini güncelle
-            await updateCredit();
+            await updateCredits();
 
             setResult({
               status: 'success',

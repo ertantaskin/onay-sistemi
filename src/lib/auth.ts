@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { compare } from 'bcryptjs';
 import { prisma } from './prisma';
+import { getServerSession } from 'next-auth';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -36,7 +37,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          credit: user.credit,
+          credits: user.credits,
           role: user.role
         };
       }
@@ -48,7 +49,7 @@ export const authOptions: NextAuthOptions = {
         return {
           ...token,
           id: user.id,
-          credit: user.credit,
+          credits: user.credits,
           role: user.role
         };
       }
@@ -60,7 +61,7 @@ export const authOptions: NextAuthOptions = {
         user: {
           ...session.user,
           id: token.id,
-          credit: token.credit,
+          credits: token.credits,
           role: token.role
         }
       };
@@ -75,4 +76,14 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 gün
   },
   secret: process.env.NEXTAUTH_SECRET,
-}; 
+};
+
+export async function getToken() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return null;
+  
+  return {
+    ...session.user,
+    role: session.user.role || 'USER'
+  };
+} 

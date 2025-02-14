@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       // Kullanıcının kredisini artır
       const user = await prisma.user.update({
         where: { id: session.user.id },
-        data: { credit: { increment: creditAmount } }
+        data: { credits: { increment: creditAmount } }
       });
 
       return { transaction, user };
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         createdAt: result.transaction.createdAt
       },
       user: {
-        credit: result.user.credit
+        credits: result.user.credits
       }
     });
   } catch (error) {

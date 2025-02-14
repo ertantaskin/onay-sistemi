@@ -31,7 +31,7 @@ export async function PATCH(req: Request) {
         id: true,
         name: true,
         email: true,
-        credit: true,
+        credits: true,
         role: true,
         createdAt: true
       }

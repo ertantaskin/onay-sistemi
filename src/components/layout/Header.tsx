@@ -91,13 +91,13 @@ function classNames(...classes: string[]) {
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const { data: session } = useSession();
-  const { credit, updateCredit } = useCreditStore();
+  const { credits, updateCredits } = useCreditStore();
 
   useEffect(() => {
     if (session) {
-      updateCredit();
+      updateCredits();
     }
-  }, [session, updateCredit]);
+  }, [session, updateCredits]);
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' });
@@ -238,18 +238,53 @@ export function Header() {
                   <div className="relative group">
                     <button className={`flex items-center gap-x-2 px-4 py-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} transition-colors duration-200`}>
                       <UserCircleIcon className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-                      <div className="flex flex-col items-start">
-                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
-                          {session.user?.email}
-                        </span>
-                        <span className="text-sm text-blue-500 font-semibold">
-                          {credit} Kredi
-                        </span>
-                      </div>
+                      <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+                        {session.user?.email}
+                      </span>
                     </button>
 
                     <div className={`absolute right-0 z-10 mt-3 w-screen max-w-xs transform px-2 sm:px-0 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200`}>
                       <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} px-5 py-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                          <div className="flex flex-col gap-3">
+                            <div className={`relative overflow-hidden rounded-xl p-4 ${
+                              theme === 'dark'
+                                ? 'bg-gradient-to-br from-blue-600/20 via-blue-900/30 to-blue-800/20 ring-1 ring-blue-500/20'
+                                : 'bg-gradient-to-br from-blue-50 via-blue-100/50 to-blue-50 ring-1 ring-blue-100'
+                            }`}>
+                              <div className="absolute top-0 left-0 w-full h-full">
+                                <div className={`absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,transparent,black)] ${theme === 'dark' ? 'opacity-20' : 'opacity-40'}`} />
+                                <div className={`absolute inset-0 bg-gradient-to-t ${theme === 'dark' ? 'from-gray-900/20' : 'from-blue-50/20'} to-transparent`} />
+                              </div>
+                              <div className="relative">
+                                <div className="flex justify-between items-center mb-3">
+                                  <span className={`text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    Mevcut Bakiye
+                                  </span>
+                                  <CurrencyDollarIcon className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                                </div>
+                                <div className="flex items-baseline gap-1 mb-3">
+                                  <span className={`text-2xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                                    {credits}
+                                  </span>
+                                  <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    kredi
+                                  </span>
+                                </div>
+                                <Link
+                                  href="/dashboard/credits/add"
+                                  className={`block w-full text-center text-sm font-medium px-4 py-2 rounded-lg 
+                                    ${theme === 'dark' 
+                                      ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                    } transition-all duration-200 shadow-sm`}
+                                >
+                                  Kredi Yükle
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                         <div className={`relative grid gap-6 px-5 py-6 sm:gap-8 sm:p-8 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                           {userMenuItems.map((item) => (
                             <Link
@@ -340,70 +375,168 @@ export function Header() {
                   <div className="mt-6">
                     <nav className="grid gap-y-4">
                       {session && (
-                        <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                          <div className="flex items-center space-x-3">
-                            <UserCircleIcon className="h-6 w-6 text-blue-500" />
+                        <div className={`p-5 rounded-xl ${theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900' : 'bg-gradient-to-br from-white to-gray-50'} shadow-lg ring-1 ring-black/5 backdrop-blur-sm`}>
+                          <div className="flex items-center gap-4">
+                            <div className={`p-2.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} ring-1 ring-black/5 shadow-sm`}>
+                              <UserCircleIcon className={`h-6 w-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                            </div>
                             <div>
                               <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                                 {session.user?.email}
                               </p>
-                              <p className="text-sm text-blue-500 font-semibold">
-                                {credit} Kredi
-                              </p>
+                              <div className={`flex items-center gap-1.5 mt-0.5`}>
+                                <CurrencyDollarIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                                <span className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                                  {credits} Kredi
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       )}
 
-                      <Link
-                        href="/"
-                        className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
-                      >
-                        <HomeIcon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                        <span className="ml-3 text-base font-medium">Ana Sayfa</span>
-                      </Link>
+                      <div className={`space-y-2 pb-4 pt-2 ${theme === 'dark' ? 'border-b border-gray-800' : 'border-b border-gray-100'}`}>
+                        <div className="px-3 flex items-center justify-between">
+                          <p className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Ana Menü
+                          </p>
+                          <div className={`h-px flex-grow mx-3 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
+                        </div>
+                        <div className="space-y-1 px-2">
+                          <Link
+                            href="/"
+                            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
+                              ${theme === 'dark' 
+                                ? 'text-gray-300 hover:bg-gray-800/80' 
+                                : 'text-gray-900 hover:bg-gray-50'
+                              } transition-all duration-200`}
+                          >
+                            <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
+                              <HomeIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                            </span>
+                            Ana Sayfa
+                          </Link>
 
-                      {session && userMenuItems.map((item) => (
-                        <Link
-                          key={item.name}
-                          href={item.href}
-                          className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
-                        >
-                          <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                          <span className="ml-3 text-base font-medium">{item.name}</span>
-                        </Link>
-                      ))}
+                          {session && (
+                            <div className="space-y-1">
+                              {products.map((item) => (
+                                <Link
+                                  key={item.name}
+                                  href={item.href}
+                                  className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
+                                    ${theme === 'dark' 
+                                      ? 'text-gray-300 hover:bg-gray-800/80' 
+                                      : 'text-gray-900 hover:bg-gray-50'
+                                    } transition-all duration-200 ${
+                                      item.highlight
+                                        ? item.highlightColor === 'blue'
+                                          ? theme === 'dark' 
+                                            ? 'bg-blue-900/10 hover:bg-blue-900/20'
+                                            : 'bg-blue-50 hover:bg-blue-100/80'
+                                          : theme === 'dark'
+                                            ? 'bg-green-900/10 hover:bg-green-900/20'
+                                            : 'bg-green-50 hover:bg-green-100/80'
+                                        : ''
+                                    }`}
+                                >
+                                  <span className={`p-1.5 rounded-lg ${
+                                    item.highlight
+                                      ? item.highlightColor === 'blue'
+                                        ? theme === 'dark'
+                                          ? 'bg-blue-900/30 group-hover:bg-blue-900/40'
+                                          : 'bg-blue-100 group-hover:bg-blue-200'
+                                        : theme === 'dark'
+                                          ? 'bg-green-900/30 group-hover:bg-green-900/40'
+                                          : 'bg-green-100 group-hover:bg-green-200'
+                                      : theme === 'dark'
+                                        ? 'bg-gray-800 group-hover:bg-gray-700'
+                                        : 'bg-white group-hover:bg-gray-100'
+                                  } ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
+                                    <item.icon className={`h-4 w-4 ${
+                                      item.highlight
+                                        ? item.highlightColor === 'blue'
+                                          ? 'text-blue-400'
+                                          : 'text-green-400'
+                                        : theme === 'dark'
+                                          ? 'text-blue-400'
+                                          : 'text-blue-600'
+                                    }`} />
+                                  </span>
+                                  {item.name}
+                                  {item.highlight && (
+                                    <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
+                                      item.highlightColor === 'blue'
+                                        ? theme === 'dark'
+                                          ? 'bg-blue-900/30 text-blue-300'
+                                          : 'bg-blue-100 text-blue-700'
+                                        : theme === 'dark'
+                                          ? 'bg-green-900/30 text-green-300'
+                                          : 'bg-green-100 text-green-700'
+                                    }`}>
+                                      Önerilen
+                                    </span>
+                                  )}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
 
-                      {session && products.map((item) => (
-                        <Link
-                          key={item.name}
-                          href={item.href}
-                          className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
-                        >
-                          <item.icon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                          <span className="ml-3 text-base font-medium">{item.name}</span>
-                        </Link>
-                      ))}
+                          <Link
+                            href="/about"
+                            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
+                              ${theme === 'dark' 
+                                ? 'text-gray-300 hover:bg-gray-800/80' 
+                                : 'text-gray-900 hover:bg-gray-50'
+                              } transition-all duration-200`}
+                          >
+                            <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
+                              <InformationCircleIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                            </span>
+                            Hakkında
+                          </Link>
+                        </div>
+                      </div>
 
-                      <Link
-                        href="/about"
-                        className={`-m-3 flex items-center rounded-md p-3 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'}`}
-                      >
-                        <InformationCircleIcon className={`h-6 w-6 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} aria-hidden="true" />
-                        <span className="ml-3 text-base font-medium">Hakkında</span>
-                      </Link>
+                      {session && (
+                        <div className="space-y-2 pt-2">
+                          <div className="px-3 flex items-center justify-between">
+                            <p className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                              Hesap
+                            </p>
+                            <div className={`h-px flex-grow mx-3 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
+                          </div>
+                          <div className="space-y-1 px-2">
+                            {userMenuItems.map((item) => (
+                              <Link
+                                key={item.name}
+                                href={item.href}
+                                className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
+                                  ${theme === 'dark' 
+                                    ? 'text-gray-300 hover:bg-gray-800/80' 
+                                    : 'text-gray-900 hover:bg-gray-50'
+                                  } transition-all duration-200`}
+                              >
+                                <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
+                                  <item.icon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                                </span>
+                                {item.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </nav>
                   </div>
                 </div>
-                <div className={`px-5 py-6 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <div className={`px-5 py-6 ${theme === 'dark' ? 'bg-gradient-to-b from-gray-800 to-gray-900' : 'bg-gradient-to-b from-gray-50 to-gray-100'}`}>
                   <div className="flex items-center justify-between mb-4">
                     <button
                       onClick={toggleTheme}
-                      className={`p-2 rounded-lg transition-all duration-200 ${
+                      className={`p-2.5 rounded-xl transition-all duration-200 ${
                         theme === 'dark' 
-                          ? 'bg-gray-600 text-yellow-400 hover:bg-gray-500' 
-                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                      }`}
+                          ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700 ring-1 ring-yellow-400/20' 
+                          : 'bg-white text-gray-600 hover:bg-gray-50 ring-1 ring-black/5'
+                      } shadow-sm`}
                     >
                       {theme === 'dark' ? (
                         <SunIcon className="h-5 w-5" />
@@ -412,11 +545,11 @@ export function Header() {
                       )}
                     </button>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {session ? (
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-red-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-red-600"
+                        className="w-full flex items-center justify-center gap-x-2 rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:from-red-600 hover:to-red-700 transition-all duration-200"
                       >
                         <ArrowRightOnRectangleIcon className="h-5 w-5" />
                         Çıkış Yap
@@ -425,14 +558,14 @@ export function Header() {
                       <>
                         <Link
                           href="/auth/login"
-                          className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-blue-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-600"
+                          className="w-full flex items-center justify-center gap-x-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:from-blue-600 hover:to-blue-700 transition-all duration-200"
                         >
                           <UserIcon className="h-5 w-5" />
                           Giriş Yap
                         </Link>
                         <Link
                           href="/auth/register"
-                          className="w-full flex items-center justify-center gap-x-2 rounded-lg bg-green-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-600"
+                          className="w-full flex items-center justify-center gap-x-2 rounded-xl bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:from-green-600 hover:to-green-700 transition-all duration-200"
                         >
                           <UserPlusIcon className="h-5 w-5" />
                           Kayıt Ol

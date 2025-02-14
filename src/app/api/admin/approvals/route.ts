@@ -1,108 +1,159 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getToken } from 'next-auth/jwt';
 import { prisma } from '@/lib/prisma';
+import { NextRequest } from 'next/server';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
-        { status: 401 }
-      );
+    const token = await getToken({ req });
+
+    if (!token || token.role !== 'admin') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    if (session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Bu işlem için admin yetkisi gerekiyor.' },
-        { status: 403 }
-      );
+    const searchParams = req.nextUrl.searchParams;
+    const search = searchParams.get('search');
+    const status = searchParams.get('status');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+
+    // Filtreleme koşullarını oluştur
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { iidNumber: { contains: search, mode: 'insensitive' } },
+        { confirmationNumber: { contains: search, mode: 'insensitive' } },
+        { user: { 
+          OR: [
+            { email: { contains: search, mode: 'insensitive' } },
+            { name: { contains: search, mode: 'insensitive' } },
+          ]
+        }},
+      ];
     }
 
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const skip = (page - 1) * limit;
+    if (status && status !== 'all') {
+      where.status = status;
+    }
 
-    // Toplam kayıt sayısını al
-    const total = await prisma.approval.count();
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        where.createdAt.lte = new Date(endDate);
+      }
+    }
 
-    // Onayları getir
     const approvals = await prisma.approval.findMany({
+      where,
       include: {
         user: {
           select: {
-            id: true,
+            email: true,
             name: true,
-            email: true
-          }
-        }
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
-    return NextResponse.json({
-      approvals,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
+    return NextResponse.json(approvals);
   } catch (error) {
-    console.error('Admin onay listesi hatası:', error);
-    return NextResponse.json(
-      { error: 'Onay listesi alınırken bir hata oluştu.' },
-      { status: 500 }
-    );
+    console.error('Onaylar yüklenirken hata:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 
-export async function DELETE(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
-        { status: 401 }
-      );
+    const token = await getToken({ req });
+
+    if (!token || token.role !== 'admin') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    if (session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Bu işlem için admin yetkisi gerekiyor.' },
-        { status: 403 }
-      );
+    const { id, status } = await req.json();
+
+    if (!id || !status) {
+      return new NextResponse('Missing required fields', { status: 400 });
     }
 
-    const { id } = await req.json();
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Onay ID\'si gereklidir.' },
-        { status: 400 }
-      );
-    }
-
-    // Onayı sil
-    await prisma.approval.delete({
-      where: { id }
+    // Onayı bul
+    const approval = await prisma.approval.findUnique({
+      where: { id },
+      include: {
+        user: true,
+      },
     });
 
-    return NextResponse.json({
-      message: 'Onay başarıyla silindi.'
+    if (!approval) {
+      return new NextResponse('Onay bulunamadı', { status: 404 });
+    }
+
+    // Transaction başlat
+    const result = await prisma.$transaction(async (tx) => {
+      // Onay durumunu güncelle
+      const updatedApproval = await tx.approval.update({
+        where: { id },
+        data: { status },
+      });
+
+      // Eğer onay başarılı ise ve önceki durum başarılı değilse kredi ekle
+      if (status === 'success' && approval.status !== 'success') {
+        // Kredi işlemi oluştur
+        await tx.creditTransaction.create({
+          data: {
+            userId: approval.userId,
+            type: 'usage',
+            amount: -1, // Her onay 1 kredi kullanır
+            note: `IID: ${approval.iidNumber} onayı için kredi kullanıldı`,
+          },
+        });
+
+        // Kullanıcının kredisini güncelle
+        await tx.user.update({
+          where: { id: approval.userId },
+          data: {
+            credits: {
+              decrement: 1,
+            },
+          },
+        });
+      }
+      // Eğer onay başarısız/beklemede ise ve önceki durum başarılı ise krediyi iade et
+      else if (status !== 'success' && approval.status === 'success') {
+        // Kredi iadesi işlemi oluştur
+        await tx.creditTransaction.create({
+          data: {
+            userId: approval.userId,
+            type: 'refund',
+            amount: 1,
+            note: `IID: ${approval.iidNumber} onayı iptal edildiği için kredi iadesi`,
+          },
+        });
+
+        // Kullanıcının kredisini güncelle
+        await tx.user.update({
+          where: { id: approval.userId },
+          data: {
+            credits: {
+              increment: 1,
+            },
+          },
+        });
+      }
+
+      return updatedApproval;
     });
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Admin onay silme hatası:', error);
-    return NextResponse.json(
-      { error: 'Onay silinirken bir hata oluştu.' },
-      { status: 500 }
-    );
+    console.error('Onay güncellenirken hata:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

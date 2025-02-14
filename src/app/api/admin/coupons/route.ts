@@ -1,170 +1,164 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getToken } from 'next-auth/jwt';
 import { prisma } from '@/lib/prisma';
+import { Prisma, Coupon, CreditTransaction, User } from '@prisma/client';
+import { NextRequest } from 'next/server';
 
-export async function GET(req: Request) {
+type CouponWithTransactions = Coupon & {
+  transactions?: (CreditTransaction & {
+    user: Pick<User, 'name' | 'email'>;
+  })[];
+};
+
+export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
-        { status: 401 }
-      );
+    const token = await getToken({ req });
+    if (!token || token.role !== 'admin') {
+      return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 });
     }
 
-    if (session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Bu işlem için admin yetkisi gerekiyor.' },
-        { status: 403 }
-      );
-    }
+    const searchParams = req.nextUrl.searchParams;
+    const search = searchParams.get('search');
+    const includeUsages = searchParams.get('includeUsages') === 'true';
 
-    const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const skip = (page - 1) * limit;
+    const where: Prisma.CouponWhereInput = search ? {
+      code: {
+        contains: search,
+        mode: 'insensitive' as Prisma.QueryMode
+      }
+    } : {};
 
-    // Toplam kayıt sayısını al
-    const total = await prisma.coupon.count();
-
-    // Kuponları getir
     const coupons = await prisma.coupon.findMany({
-      include: {
-        usedBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+      where,
+      include: includeUsages ? {
+        transactions: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true
+              }
+            }
           }
         }
-      },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit
-    });
-
-    return NextResponse.json({
-      coupons,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit)
+      } : undefined,
+      orderBy: {
+        createdAt: 'desc'
       }
     });
+
+    // Kupon kullanım detaylarını düzenle
+    const formattedCoupons = coupons.map((coupon: CouponWithTransactions) => {
+      const { transactions, ...rest } = coupon;
+      return {
+        ...rest,
+        usages: transactions?.map(transaction => ({
+          id: transaction.id,
+          userId: transaction.userId,
+          creditAmount: transaction.amount,
+          createdAt: transaction.createdAt,
+          user: transaction.user
+        }))
+      };
+    });
+
+    return NextResponse.json(formattedCoupons);
   } catch (error) {
-    console.error('Kupon listesi hatası:', error);
+    console.error('Kuponlar yüklenirken hata:', error);
     return NextResponse.json(
-      { error: 'Kupon listesi alınırken bir hata oluştu.' },
+      { error: 'Kuponlar yüklenirken bir hata oluştu' },
       { status: 500 }
     );
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
-        { status: 401 }
-      );
+    const token = await getToken({ req });
+
+    if (!token || token.role !== 'admin') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    if (session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Bu işlem için admin yetkisi gerekiyor.' },
-        { status: 403 }
-      );
-    }
+    const { code, value, minAmount, maxUses, expiresAt } = await req.json();
 
-    const { code, amount, maxUses } = await req.json();
-
-    if (!code || !amount) {
-      return NextResponse.json(
-        { error: 'Kupon kodu ve miktar gereklidir.' },
-        { status: 400 }
-      );
+    if (!code || !value || !maxUses || !expiresAt) {
+      return new NextResponse('Missing required fields', { status: 400 });
     }
 
     // Kupon kodunun benzersiz olduğunu kontrol et
     const existingCoupon = await prisma.coupon.findUnique({
-      where: { code }
+      where: { code },
     });
 
     if (existingCoupon) {
-      return NextResponse.json(
-        { error: 'Bu kupon kodu zaten kullanımda.' },
-        { status: 400 }
-      );
+      return new NextResponse('Bu kupon kodu zaten kullanılıyor', { status: 400 });
     }
 
-    // Yeni kupon oluştur
     const coupon = await prisma.coupon.create({
       data: {
         code,
-        amount,
-        maxUses: maxUses || null,
-        isActive: true
-      }
+        value,
+        minAmount,
+        maxUses,
+        expiresAt: new Date(expiresAt),
+      },
     });
 
-    return NextResponse.json({
-      message: 'Kupon başarıyla oluşturuldu.',
-      coupon
-    });
+    return NextResponse.json(coupon);
   } catch (error) {
-    console.error('Kupon oluşturma hatası:', error);
-    return NextResponse.json(
-      { error: 'Kupon oluşturulurken bir hata oluştu.' },
-      { status: 500 }
-    );
+    console.error('Kupon oluşturulurken hata:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 
-export async function DELETE(req: Request) {
+export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Bu işlem için giriş yapmanız gerekiyor.' },
-        { status: 401 }
-      );
+    const token = await getToken({ req });
+
+    if (!token || token.role !== 'admin') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    if (session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Bu işlem için admin yetkisi gerekiyor.' },
-        { status: 403 }
-      );
+    const { id, isActive } = await req.json();
+
+    if (!id) {
+      return new NextResponse('Missing required fields', { status: 400 });
+    }
+
+    const coupon = await prisma.coupon.update({
+      where: { id },
+      data: { isActive },
+    });
+
+    return NextResponse.json(coupon);
+  } catch (error) {
+    console.error('Kupon güncellenirken hata:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const token = await getToken({ req });
+
+    if (!token || token.role !== 'admin') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const { id } = await req.json();
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'Kupon ID\'si gereklidir.' },
-        { status: 400 }
-      );
+      return new NextResponse('Missing required fields', { status: 400 });
     }
 
-    // Kuponu sil
     await prisma.coupon.delete({
-      where: { id }
+      where: { id },
     });
 
-    return NextResponse.json({
-      message: 'Kupon başarıyla silindi.'
-    });
+    return new NextResponse('Kupon başarıyla silindi', { status: 200 });
   } catch (error) {
-    console.error('Kupon silme hatası:', error);
-    return NextResponse.json(
-      { error: 'Kupon silinirken bir hata oluştu.' },
-      { status: 500 }
-    );
+    console.error('Kupon silinirken hata:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

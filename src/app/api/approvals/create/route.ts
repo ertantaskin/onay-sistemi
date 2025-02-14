@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (user.credit < 1) {
+    if (user.credits < 1) {
       return NextResponse.json(
         { error: 'Yetersiz kredi. Lütfen kredi yükleyin.' },
         { status: 402 }
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
       // Kullanıcının kredisini düş
       await prisma.user.update({
         where: { id: session.user.id },
-        data: { credit: { decrement: 1 } }
+        data: { credits: { decrement: 1 } }
       });
 
       return approval;

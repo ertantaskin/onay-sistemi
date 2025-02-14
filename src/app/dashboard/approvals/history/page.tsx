@@ -21,7 +21,7 @@ export default function ApprovalHistoryPage() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const { theme } = useTheme();
-  const { credit } = useCreditStore();
+  const { credits } = useCreditStore();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +117,7 @@ export default function ApprovalHistoryPage() {
               </div>
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-1">Mevcut Krediniz</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">{credit} Kredi</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">{credits} Kredi</p>
           </div>
 
           {/* Kredi Yükle */}

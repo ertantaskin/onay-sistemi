@@ -3,15 +3,18 @@ import NextAuth from 'next-auth';
 declare module 'next-auth' {
   interface User {
     id: string;
+    name: string | null;
     email: string;
-    name: string;
+    credits: number;
     role: string;
-    credit: number;
   }
 
   interface Session {
-    user: User & {
+    user: {
       id: string;
+      name: string | null;
+      email: string;
+      credits: number;
       role: string;
     };
   }

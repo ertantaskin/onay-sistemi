@@ -20,7 +20,7 @@ export async function GET() {
         id: true,
         name: true,
         email: true,
-        credit: true,
+        credits: true,
         role: true,
         createdAt: true
       }

@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         name,
         email,
         password: hashedPassword,
-        credit: 0,
+        credits: 0,
         role: 'user'
       }
     });
