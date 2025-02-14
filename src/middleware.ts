@@ -6,25 +6,28 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
   const { pathname } = request.nextUrl;
 
-  // Admin paneli için kontrol
+  // Admin sayfalarına erişim kontrolü
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
     if (!token) {
-      const url = new URL('/admin/login', request.url);
-      url.searchParams.set('callbackUrl', encodeURI(pathname));
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(new URL('/admin/login', request.url));
     }
-    
-    if (token.role !== 'admin') {
-      return NextResponse.redirect(new URL('/', request.url));
+
+    if (!token.isAdmin) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 
-  // Dashboard ve alt sayfaları için kontrol
+  // Dashboard sayfalarına erişim kontrolü
   if (pathname.startsWith('/dashboard')) {
     if (!token) {
-      const url = new URL('/auth/login', request.url);
-      url.searchParams.set('callbackUrl', encodeURI(pathname));
-      return NextResponse.redirect(url);
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+  }
+
+  // Admin login sayfasına erişim kontrolü
+  if (pathname === '/admin/login') {
+    if (token?.isAdmin) {
+      return NextResponse.redirect(new URL('/admin', request.url));
     }
   }
 
@@ -32,8 +35,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/dashboard/:path*',
-    '/admin/:path*',
-  ],
+  matcher: ['/admin/:path*', '/dashboard/:path*']
 }; 

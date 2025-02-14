@@ -1,34 +1,46 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { getToken } from 'next-auth/jwt';
+import { NextRequest } from 'next/server';
 
-export async function POST(req: Request) {
+// GET /api/auth/check-role
+export async function GET(request: NextRequest) {
   try {
-    const { email } = await req.json();
-
-    if (!email) {
-      return NextResponse.json(
-        { error: 'Email adresi gerekli' },
-        { status: 400 }
-      );
+    const token = await getToken({ req: request });
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { role: true },
+    return NextResponse.json({
+      isAdmin: token.isAdmin || false,
+      role: token.role || 'user'
     });
+  } catch (error) {
+    console.error('Role check error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Kullanıcı bulunamadı' },
-        { status: 404 }
-      );
+// POST /api/auth/check-role
+export async function POST(request: NextRequest) {
+  try {
+    const token = await getToken({ req: request });
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    return NextResponse.json({ role: user.role });
+    return NextResponse.json({
+      isAdmin: token.isAdmin || false,
+      role: token.role || 'user'
+    });
   } catch (error) {
-    console.error('Rol kontrolü hatası:', error);
+    console.error('Role check error:', error);
     return NextResponse.json(
-      { error: 'Bir hata oluştu' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

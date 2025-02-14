@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import toast from 'react-hot-toast';
@@ -9,11 +9,34 @@ import toast from 'react-hot-toast';
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+
+  useEffect(() => {
+    // Eğer kullanıcı zaten giriş yapmışsa ve adminse, admin paneline yönlendir
+    const checkAdminStatus = async () => {
+      if (session) {
+        try {
+          const response = await fetch('/api/auth/check-role');
+          const data = await response.json();
+          
+          if (data.isAdmin) {
+            router.push('/admin');
+          } else {
+            router.push('/dashboard');
+          }
+        } catch (error) {
+          console.error('Rol kontrolü hatası:', error);
+        }
+      }
+    };
+
+    checkAdminStatus();
+  }, [session, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,9 +63,8 @@ function LoginContent() {
         return;
       }
 
-      const callbackUrl = searchParams.get('callbackUrl') || '/admin';
-      router.push(callbackUrl);
       toast.success('Giriş başarılı!');
+      router.push('/admin');
     } catch (error) {
       console.error('Giriş hatası:', error);
       toast.error('Bir hata oluştu. Lütfen tekrar deneyin.');

@@ -7,6 +7,7 @@ declare module 'next-auth' {
     email: string;
     credits: number;
     role: string;
+    isAdmin: boolean;
   }
 
   interface Session {
@@ -16,14 +17,18 @@ declare module 'next-auth' {
       email: string;
       credits: number;
       role: string;
-    };
+      isAdmin: boolean;
+    }
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
+    email: string;
+    name: string | null;
+    credits: number;
     role: string;
-    credit: number;
+    isAdmin: boolean;
   }
 } 
