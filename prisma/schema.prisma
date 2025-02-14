@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,15 +13,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -38,26 +34,25 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String
-  credits       Int       @default(0)
-  role          String    @default("user")
-  isAdmin       Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  accounts          Account[]
-  sessions          Session[]
-  transactions      Transaction[]
-  approvals         Approval[]
+  id                 String              @id @default(cuid())
+  name               String?
+  email              String              @unique
+  emailVerified      DateTime?
+  image              String?
+  password           String
+  credits            Int                 @default(0)
+  role               String              @default("user")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  isAdmin            Boolean             @default(false)
+  accounts           Account[]
+  approvals          Approval[]
+  couponUsages       CouponUsage[]
   creditTransactions CreditTransaction[]
-  couponUsages      CouponUsage[]
-  tickets           Ticket[]
-  ticketMessages    TicketMessage[]
+  sessions           Session[]
+  tickets            Ticket[]
+  ticketMessages     TicketMessage[]
+  transactions       Transaction[]
 }
 
 model VerificationToken {
@@ -69,24 +64,23 @@ model VerificationToken {
 }
 
 model PaymentMethod {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
+  id             String          @id @default(cuid())
+  name           String
+  description    String?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   creditPackages CreditPackage[]
 }
 
 model CreditPackage {
-  id             String    @id @default(cuid())
-  name           String
-  credits        Int
-  price          Float
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id              String        @id @default(cuid())
+  name            String
+  credits         Int
+  price           Float
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   paymentMethodId String
   paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
 
@@ -94,44 +88,42 @@ model CreditPackage {
 }
 
 model Transaction {
-  id          String   @id @default(cuid())
-  userId      String
-  amount      Int
-  type        String
-  status      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user        User     @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  type      String
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
 
 model Approval {
-  id                String   @id @default(cuid())
-  userId            String
-  iidNumber         String
+  id                 String   @id @default(cuid())
+  userId             String
+  status             String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  iidNumber          String
   confirmationNumber String
-  status            String
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  user              User     @relation(fields: [userId], references: [id])
+  user               User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
 
 model CreditTransaction {
-  id          String   @id @default(cuid())
-  userId      String
-  type        String   // 'purchase', 'usage', 'refund', 'coupon'
-  amount      Int
-  note        String?
-  couponId    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  coupon      Coupon?  @relation(fields: [couponId], references: [id])
-  user        User     @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  amount    Int
+  couponId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  note      String?
+  coupon    Coupon?  @relation(fields: [couponId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([couponId])
@@ -141,9 +133,9 @@ model CouponUsage {
   id           String   @id @default(cuid())
   couponId     String
   userId       String
-  creditAmount Int
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  creditAmount Int
   coupon       Coupon   @relation(fields: [couponId], references: [id])
   user         User     @relation(fields: [userId], references: [id])
 
@@ -152,61 +144,59 @@ model CouponUsage {
 }
 
 model Coupon {
-  id          String      @id @default(cuid())
-  code        String      @unique
-  value       Int
-  minAmount   Int         @default(0)
-  maxUses     Int
-  usedCount   Int         @default(0)
-  expiresAt   DateTime
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           String              @id @default(cuid())
+  code         String              @unique
+  expiresAt    DateTime
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  isActive     Boolean             @default(true)
+  maxUses      Int
+  minAmount    Int                 @default(0)
+  usedCount    Int                 @default(0)
+  value        Int
+  usages       CouponUsage[]
   transactions CreditTransaction[]
-  usages      CouponUsage[]
 }
 
 model SupportCategory {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   tickets     Ticket[]
 }
 
 model Ticket {
-  id          String    @id @default(cuid())
-  userId      String
-  categoryId  String
-  subject     String
-  status      String    @default("open") // open, in_progress, closed
-  priority    String    @default("normal") // low, normal, high
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  closedAt    DateTime?
-
-  user        User     @relation(fields: [userId], references: [id])
-  category    SupportCategory @relation(fields: [categoryId], references: [id])
-  messages    TicketMessage[]
+  id         String          @id @default(cuid())
+  userId     String
+  categoryId String
+  subject    String
+  status     String          @default("open")
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  closedAt   DateTime?
+  priority   String          @default("normal")
+  category   SupportCategory @relation(fields: [categoryId], references: [id])
+  user       User            @relation(fields: [userId], references: [id])
+  messages   TicketMessage[]
 
   @@index([userId])
   @@index([categoryId])
 }
 
 model TicketMessage {
-  id          String    @id @default(cuid())
-  ticketId    String
-  userId      String
-  message     String    @db.Text
-  isStaff     Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  ticket      Ticket    @relation(fields: [ticketId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
+  id        String   @id @default(cuid())
+  ticketId  String
+  userId    String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isStaff   Boolean  @default(false)
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@index([ticketId])
   @@index([userId])
-} 
+}
