@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useTheme } from '@/app/ThemeContext';
 import Image from 'next/image';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { usePageContent } from '@/hooks/usePageContent';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,6 +20,50 @@ export default function LoginPage() {
     email: '',
     password: '',
   });
+  const { pageContent, isLoading: pageLoading } = usePageContent("login");
+
+  // Sayfa başlığı ve açıklaması için varsayılan değerler - sadece meta veriler düzenlenebilir
+  const pageTitle = pageContent?.metaTitle || "Giriş Yap - Microsoft Onay Sistemi";
+  const pageDescription = pageContent?.metaDesc || "Microsoft Onay Sistemi'ne giriş yapın ve hızlı onay hizmetlerimizden yararlanın.";
+
+  // useEffect ile meta etiketlerini güncelleyelim
+  useEffect(() => {
+    // Sayfa başlığını güncelle
+    document.title = pageTitle;
+    
+    // Meta açıklamasını güncelle
+    const updateMetaTag = (name: string, content: string) => {
+      let meta = document.querySelector(`meta[name="${name}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', name);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+    
+    // Open Graph meta etiketlerini güncelle
+    const updateOgMetaTag = (property: string, content: string) => {
+      let meta = document.querySelector(`meta[property="${property}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('property', property);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+    
+    updateMetaTag('description', pageDescription);
+    updateOgMetaTag('og:title', pageTitle);
+    updateOgMetaTag('og:description', pageDescription);
+    updateOgMetaTag('twitter:title', pageTitle);
+    updateOgMetaTag('twitter:description', pageDescription);
+    
+    // Temizleme fonksiyonu
+    return () => {
+      document.title = "Microsoft Onay Sistemi";
+    };
+  }, [pageTitle, pageDescription]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

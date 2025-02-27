@@ -1,32 +1,136 @@
-import { getServerSession } from 'next-auth/next';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
 import Link from 'next/link';
-import { prisma } from '@/lib/prisma';
 import { CheckCircleIcon, ArrowRightIcon, CreditCardIcon, ClockIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { usePageContent } from '@/hooks/usePageContent';
 
-export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
+export default function DashboardPage() {
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      redirect('/auth/login');
+    },
+  });
+  
+  const { pageContent, isLoading: pageLoading } = usePageContent("dashboard");
+  const [userData, setUserData] = useState({
+    name: '',
+    email: '',
+    credits: 0,
+    totalApprovals: 0,
+    lastTransaction: null
+  });
+  const [loading, setLoading] = useState(true);
 
-  if (!session) {
-    redirect('/auth/login');
+  // Sayfa başlığı ve açıklaması için varsayılan değerler
+  const pageTitle = pageContent?.metaTitle || "Kontrol Paneli - Microsoft Onay Sistemi";
+  const pageDescription = pageContent?.metaDesc || "Microsoft Onay Sistemi kullanıcı kontrol paneli. Kredi bakiyenizi görüntüleyin ve onay işlemlerinizi takip edin.";
+
+  // useEffect ile meta etiketlerini güncelleyelim
+  useEffect(() => {
+    // Sayfa başlığını güncelle
+    document.title = pageTitle;
+    
+    // Meta açıklamasını güncelle
+    const updateMetaTag = (name: string, content: string) => {
+      let meta = document.querySelector(`meta[name="${name}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', name);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+    
+    // Open Graph meta etiketlerini güncelle
+    const updateOgMetaTag = (property: string, content: string) => {
+      let meta = document.querySelector(`meta[property="${property}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('property', property);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
+    
+    updateMetaTag('description', pageDescription);
+    updateOgMetaTag('og:title', pageTitle);
+    updateOgMetaTag('og:description', pageDescription);
+    updateOgMetaTag('twitter:title', pageTitle);
+    updateOgMetaTag('twitter:description', pageDescription);
+  }, [pageTitle, pageDescription]);
+
+  // Kullanıcı verilerini getir
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (status === 'loading' || !session) return;
+      
+      try {
+        setLoading(true);
+        
+        // Kullanıcı bilgilerini getir
+        const userResponse = await fetch('/api/users/me');
+        if (!userResponse.ok) {
+          throw new Error('Kullanıcı bilgileri alınamadı');
+        }
+        const userDataResponse = await userResponse.json();
+        const userData = userDataResponse.user;
+        
+        if (!userData) {
+          throw new Error('Kullanıcı bilgileri alınamadı');
+        }
+        
+        // Onay sayısını getir
+        let approvalCount = 0;
+        try {
+          const approvalsResponse = await fetch('/api/approvals/count');
+          if (approvalsResponse.ok) {
+            const approvalsData = await approvalsResponse.json();
+            approvalCount = approvalsData.count || 0;
+          }
+        } catch (approvalError) {
+          console.error('Onay sayısı alınırken hata:', approvalError);
+        }
+        
+        // Son işlemi getir
+        let lastTransaction = null;
+        try {
+          const transactionsResponse = await fetch('/api/credits/transactions/latest');
+          if (transactionsResponse.ok) {
+            const transactionData = await transactionsResponse.json();
+            lastTransaction = transactionData.transaction;
+          }
+        } catch (transactionError) {
+          console.error('Son işlem alınırken hata:', transactionError);
+        }
+        
+        setUserData({
+          name: userData.name || '',
+          email: userData.email || '',
+          credits: userData.credits || 0,
+          totalApprovals: approvalCount,
+          lastTransaction: lastTransaction
+        });
+      } catch (error) {
+        console.error('Kullanıcı verileri yüklenirken hata:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUserData();
+  }, [session, status]);
+
+  if (status === 'loading' || loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
-  
-  // Kullanıcı bilgilerini ve kredi bakiyesini getir
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id }
-  });
-  
-  // Toplam onay sayısını getir
-  const totalApprovals = await prisma.approval.count({
-    where: { userId: session.user.id }
-  });
-
-  // Son işlemi getir
-  const lastTransaction = await prisma.creditTransaction.findFirst({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: 'desc' }
-  });
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('tr-TR', {
@@ -125,7 +229,7 @@ export default async function DashboardPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 dark:text-gray-300">Mevcut Krediniz</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">{user?.credits || 0} Kredi</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white">{userData.credits} Kredi</p>
               </div>
               <Link
                 href="/dashboard/credits/history"

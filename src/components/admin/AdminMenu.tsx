@@ -18,7 +18,8 @@ import {
   HiOutlineLogout,
   HiOutlineUser,
   HiOutlineMenu,
-  HiOutlineX
+  HiOutlineX,
+  HiOutlineShoppingBag
 } from 'react-icons/hi';
 
 export default function AdminMenu() {
@@ -73,6 +74,15 @@ export default function AdminMenu() {
       ]
     },
     {
+      title: 'Mağaza Yönetimi',
+      icon: HiOutlineShoppingBag,
+      items: [
+        { href: '/admin/store/products', label: 'Ürünler' },
+        { href: '/admin/store/categories', label: 'Kategoriler' },
+        { href: '/admin/store/orders', label: 'Siparişler' }
+      ]
+    },
+    {
       title: 'Kullanıcılar',
       icon: HiOutlineUsers,
       items: [
@@ -105,7 +115,8 @@ export default function AdminMenu() {
       title: 'Ayarlar',
       icon: HiOutlineCog,
       items: [
-        { href: '/admin/settings', label: 'Sistem Ayarları' }
+        { href: '/admin/settings', label: 'Sistem Ayarları' },
+        { href: '/admin/page-content', label: 'Sayfa İçerikleri' }
       ]
     }
   ];

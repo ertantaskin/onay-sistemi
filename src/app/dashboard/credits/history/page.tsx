@@ -12,7 +12,7 @@ import { useCreditStore } from '@/store/creditStore';
 interface CreditTransaction {
   id: string;
   amount: number;
-  type: 'purchase' | 'coupon' | 'refund' | 'usage';
+  type: 'purchase' | 'coupon' | 'refund' | 'usage' | 'PURCHASE';
   status: 'pending' | 'completed' | 'failed';
   paymentMethod?: string;
   description: string;
@@ -65,6 +65,7 @@ export default function CreditHistoryPage() {
   const getTransactionTypeText = (type: string) => {
     switch (type) {
       case 'purchase': return 'Satın Alma';
+      case 'PURCHASE': return 'Satın Alma';
       case 'coupon': return 'Kupon';
       case 'refund': return 'İade';
       case 'usage': return 'Kullanım';
@@ -173,8 +174,10 @@ export default function CreditHistoryPage() {
                           {getTransactionTypeText(transaction.type)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <span className={transaction.type === 'usage' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}>
-                            {transaction.type === 'usage' ? '-' : '+'}{transaction.amount} Kredi
+                          <span className={transaction.type === 'usage' || transaction.type === 'PURCHASE' || transaction.amount < 0 
+                            ? 'text-red-600 dark:text-red-400' 
+                            : 'text-green-600 dark:text-green-400'}>
+                            {transaction.amount < 0 ? '' : '+'}{transaction.amount} Kredi
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

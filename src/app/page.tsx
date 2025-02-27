@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useTheme } from './ThemeContext';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -7,6 +8,8 @@ import { IIDForm } from '@/components/forms/IIDForm';
 import { Toaster } from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import Link from 'next/link';
+import { usePageContent } from '@/hooks/usePageContent';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -14,6 +17,7 @@ import 'swiper/css/navigation';
 
 export default function Home() {
   const { theme } = useTheme();
+  const { pageContent, isLoading: pageLoading } = usePageContent("home");
 
   const slides = [
     {
@@ -32,6 +36,51 @@ export default function Home() {
       image: '/slider/slide3.jpg'
     }
   ];
+
+  // Sayfa başlığı ve açıklaması için varsayılan değerler
+  const pageTitle = pageContent?.metaTitle || "Microsoft Onay Sistemi";
+  const pageDescription = pageContent?.metaDesc || "Microsoft ürünleriniz için hızlı ve güvenli onay alın. 7/24 destek ve uygun fiyatlar.";
+
+  // useEffect ile meta etiketlerini güncelleyelim
+  useEffect(() => {
+    // Sayfa başlığını güncelle
+    document.title = pageTitle;
+    
+    // Meta açıklamasını güncelle
+    const updateMetaTag = (name: string, content: string) => {
+      let metaTag = document.querySelector(`meta[name="${name}"]`);
+      if (!metaTag) {
+        metaTag = document.createElement('meta');
+        metaTag.setAttribute('name', name);
+        document.head.appendChild(metaTag);
+      }
+      metaTag.setAttribute('content', content);
+    };
+
+    const updateOgMetaTag = (property: string, content: string) => {
+      let metaTag = document.querySelector(`meta[property="${property}"]`);
+      if (!metaTag) {
+        metaTag = document.createElement('meta');
+        metaTag.setAttribute('property', property);
+        document.head.appendChild(metaTag);
+      }
+      metaTag.setAttribute('content', content);
+    };
+
+    // Meta etiketlerini güncelle
+    updateMetaTag('description', pageDescription);
+    updateOgMetaTag('og:title', pageTitle);
+    updateOgMetaTag('og:description', pageDescription);
+    updateOgMetaTag('og:type', 'website');
+    updateMetaTag('twitter:card', 'summary_large_image');
+    updateMetaTag('twitter:title', pageTitle);
+    updateMetaTag('twitter:description', pageDescription);
+    
+    // Temizleme fonksiyonu
+    return () => {
+      document.title = "Microsoft Onay Sistemi";
+    };
+  }, [pageTitle, pageDescription]);
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -123,6 +172,29 @@ export default function Home() {
               <p className="text-lg opacity-75">IID numaranızı girerek hemen onay numaranızı alabilirsiniz.</p>
             </div>
             <IIDForm />
+          </div>
+        </div>
+      </section>
+
+      {/* Store Section */}
+      <section className="py-16 bg-gradient-to-b from-blue-50 to-transparent dark:from-blue-950/20 dark:to-transparent">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-4">Microsoft Lisans Mağazamızı Keşfedin</h2>
+            <p className="text-lg opacity-75 mb-8">Orijinal Microsoft lisanslarını uygun fiyatlarla satın alabilirsiniz.</p>
+            <div className="flex justify-center">
+              <Link 
+                href="/store" 
+                className={`inline-flex items-center px-6 py-3 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl ${
+                  theme === 'dark' ? 'hover:bg-blue-500' : 'hover:bg-blue-700'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                Mağazaya Git
+              </Link>
+            </div>
           </div>
         </div>
       </section>

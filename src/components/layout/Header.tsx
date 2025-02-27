@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useTheme } from '@/app/ThemeContext';
 import { Popover, Transition } from '@headlessui/react';
 import {
@@ -20,11 +20,14 @@ import {
   ClockIcon,
   ChartBarIcon,
   CheckCircleIcon,
+  ShoppingBagIcon,
 } from '@heroicons/react/24/outline';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
 import { useCreditStore } from '@/store/creditStore';
+import { useCartStore } from '@/store/cartStore';
 
 const products = [
   {
@@ -84,6 +87,24 @@ const userMenuItems = [
   },
 ];
 
+interface MiniCartItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  price: number;
+  product: {
+    id: string;
+    name: string;
+    imageUrl: string | null;
+  };
+}
+
+interface MiniCart {
+  id: string;
+  totalPrice: number;
+  items: MiniCartItem[];
+}
+
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
@@ -92,15 +113,51 @@ export function Header() {
   const { theme, toggleTheme } = useTheme();
   const { data: session } = useSession();
   const { credits, updateCredits } = useCreditStore();
+  const { itemCount, updateCartItemCount } = useCartStore();
+  const [miniCart, setMiniCart] = useState<MiniCart | null>(null);
+  const [loadingMiniCart, setLoadingMiniCart] = useState(false);
+  const [showMiniCart, setShowMiniCart] = useState(false);
 
   useEffect(() => {
     if (session) {
       updateCredits();
+      updateCartItemCount();
     }
-  }, [session, updateCredits]);
+  }, [session, updateCredits, updateCartItemCount]);
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' });
+  };
+
+  const fetchMiniCart = async () => {
+    if (!session) return;
+    
+    try {
+      setLoadingMiniCart(true);
+      const response = await fetch("/api/store/cart");
+      
+      if (!response.ok) {
+        throw new Error("Sepet yüklenirken bir hata oluştu");
+      }
+      
+      const data = await response.json();
+      setMiniCart(data);
+    } catch (error) {
+      console.error("Mini sepet yüklenirken hata:", error);
+    } finally {
+      setLoadingMiniCart(false);
+    }
+  };
+
+  const toggleMiniCart = async () => {
+    if (!showMiniCart) {
+      await fetchMiniCart();
+    }
+    setShowMiniCart(!showMiniCart);
+  };
+
+  const formatPrice = (price: number) => {
+    return price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' });
   };
 
   return (
@@ -138,6 +195,10 @@ export function Header() {
             <div className="hidden lg:flex lg:gap-x-12">
               <Link href="/" className={`text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
                 Ana Sayfa
+              </Link>
+
+              <Link href="/store" className={`text-sm font-semibold leading-6 ${theme === 'dark' ? 'text-gray-300 hover:text-white' : 'text-gray-900 hover:text-gray-600'}`}>
+                Mağaza
               </Link>
 
               {session && (
@@ -217,6 +278,123 @@ export function Header() {
             </div>
 
             <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
+              {session && (
+                <div className="relative">
+                  <button
+                    onClick={toggleMiniCart}
+                    className={`relative p-2 rounded-lg transition-all duration-200 ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 text-blue-400 hover:bg-gray-600' 
+                        : 'bg-gray-100 text-blue-600 hover:bg-gray-200'
+                    }`}
+                    aria-label="Sepet"
+                  >
+                    <ShoppingBagIcon className="h-5 w-5" />
+                    {itemCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                        {itemCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Mini Sepet */}
+                  {showMiniCart && (
+                    <div className={`absolute right-0 z-20 mt-3 w-80 transform px-2 sm:px-0 transition-all duration-200`}>
+                      <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                          <div className="flex items-center justify-between">
+                            <h3 className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                              Sepetim ({itemCount} ürün)
+                            </h3>
+                            <button 
+                              onClick={() => setShowMiniCart(false)}
+                              className={`p-1 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                            >
+                              <XMarkIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className={`max-h-80 overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                          {loadingMiniCart ? (
+                            <div className="flex justify-center items-center py-8">
+                              <Loader2 className={`h-8 w-8 animate-spin ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                            </div>
+                          ) : miniCart && miniCart.items.length > 0 ? (
+                            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                              {miniCart.items.slice(0, 3).map((item) => (
+                                <div key={item.id} className="flex items-center gap-3 p-3">
+                                  <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                                    {item.product.imageUrl ? (
+                                      <Image
+                                        src={item.product.imageUrl}
+                                        alt={item.product.name}
+                                        fill
+                                        className="object-cover object-center"
+                                      />
+                                    ) : (
+                                      <div className={`h-full w-full flex items-center justify-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                        <ShoppingBagIcon className={`h-8 w-8 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                      {item.product.name}
+                                    </p>
+                                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                      {item.quantity} x {formatPrice(item.price)}
+                                    </p>
+                                  </div>
+                                  <div className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                                    {formatPrice(item.price * item.quantity)}
+                                  </div>
+                                </div>
+                              ))}
+                              
+                              {miniCart.items.length > 3 && (
+                                <div className={`p-3 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                  +{miniCart.items.length - 3} diğer ürün
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className={`py-8 px-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                              <ShoppingBagIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                              <p>Sepetinizde ürün bulunmuyor</p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {miniCart && miniCart.items.length > 0 && (
+                          <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-4 py-3`}>
+                            <div className="flex justify-between items-center mb-3">
+                              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                                Toplam
+                              </span>
+                              <span className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                {formatPrice(miniCart.totalPrice)}
+                              </span>
+                            </div>
+                            <Link
+                              href="/store/cart"
+                              onClick={() => setShowMiniCart(false)}
+                              className={`block w-full text-center text-sm font-medium px-4 py-2 rounded-lg 
+                                ${theme === 'dark' 
+                                  ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                                  : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                } transition-all duration-200 shadow-sm`}
+                            >
+                              Sepete Git
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <button
                 onClick={toggleTheme}
                 className={`p-2 rounded-lg transition-all duration-200 ${
@@ -392,6 +570,132 @@ export function Header() {
                               </div>
                             </div>
                           </div>
+                          
+                          <div className="mt-4 flex justify-between">
+                            <div className="relative">
+                              <button
+                                onClick={toggleMiniCart}
+                                className={`relative flex items-center gap-2 px-4 py-2 rounded-lg ${
+                                  theme === 'dark' 
+                                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                                } transition-colors duration-200`}
+                              >
+                                <ShoppingBagIcon className="h-5 w-5" />
+                                <span>Sepetim</span>
+                                {itemCount > 0 && (
+                                  <span className="ml-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                    {itemCount}
+                                  </span>
+                                )}
+                              </button>
+
+                              {/* Mobil Mini Sepet */}
+                              {showMiniCart && (
+                                <div className={`absolute left-0 z-20 mt-3 w-72 transform px-2 sm:px-0 transition-all duration-200`}>
+                                  <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                                    <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                                      <div className="flex items-center justify-between">
+                                        <h3 className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                          Sepetim ({itemCount} ürün)
+                                        </h3>
+                                        <button 
+                                          onClick={() => setShowMiniCart(false)}
+                                          className={`p-1 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                                        >
+                                          <XMarkIcon className="h-5 w-5" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className={`max-h-80 overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                                      {loadingMiniCart ? (
+                                        <div className="flex justify-center items-center py-8">
+                                          <Loader2 className={`h-8 w-8 animate-spin ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                                        </div>
+                                      ) : miniCart && miniCart.items.length > 0 ? (
+                                        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                          {miniCart.items.slice(0, 3).map((item) => (
+                                            <div key={item.id} className="flex items-center gap-3 p-3">
+                                              <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                                                {item.product.imageUrl ? (
+                                                  <Image
+                                                    src={item.product.imageUrl}
+                                                    alt={item.product.name}
+                                                    fill
+                                                    className="object-cover object-center"
+                                                  />
+                                                ) : (
+                                                  <div className={`h-full w-full flex items-center justify-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                                    <ShoppingBagIcon className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
+                                                  </div>
+                                                )}
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <p className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                                  {item.product.name}
+                                                </p>
+                                                <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                  {item.quantity} x {formatPrice(item.price)}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          ))}
+                                          
+                                          {miniCart.items.length > 3 && (
+                                            <div className={`p-3 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                              +{miniCart.items.length - 3} diğer ürün
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <div className={`py-8 px-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                          <ShoppingBagIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                          <p>Sepetinizde ürün bulunmuyor</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                    
+                                    {miniCart && miniCart.items.length > 0 && (
+                                      <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-4 py-3`}>
+                                        <div className="flex justify-between items-center mb-3">
+                                          <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                                            Toplam
+                                          </span>
+                                          <span className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                            {formatPrice(miniCart.totalPrice)}
+                                          </span>
+                                        </div>
+                                        <Link
+                                          href="/store/cart"
+                                          onClick={() => setShowMiniCart(false)}
+                                          className={`block w-full text-center text-sm font-medium px-4 py-2 rounded-lg 
+                                            ${theme === 'dark' 
+                                              ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                                              : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                            } transition-all duration-200 shadow-sm`}
+                                        >
+                                          Sepete Git
+                                        </Link>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <Link
+                              href="/dashboard/credits/add"
+                              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                                theme === 'dark' 
+                                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                  : 'bg-blue-500 text-white hover:bg-blue-600'
+                              } transition-colors duration-200`}
+                            >
+                              <CurrencyDollarIcon className="h-5 w-5" />
+                              <span>Kredi Yükle</span>
+                            </Link>
+                          </div>
                         </div>
                       )}
 
@@ -415,6 +719,20 @@ export function Header() {
                               <HomeIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
                             </span>
                             Ana Sayfa
+                          </Link>
+
+                          <Link
+                            href="/store"
+                            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
+                              ${theme === 'dark' 
+                                ? 'text-gray-300 hover:bg-gray-800/80' 
+                                : 'text-gray-900 hover:bg-gray-50'
+                              } transition-all duration-200`}
+                          >
+                            <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
+                              <ShoppingBagIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                            </span>
+                            Mağaza
                           </Link>
 
                           {session && (
