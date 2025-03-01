@@ -81,6 +81,19 @@ export default function LoginPage() {
         setError(result.error === 'CredentialsSignin' ? 'Email veya şifre hatalı!' : result.error);
         toast.error('Giriş başarısız!');
       } else {
+        // Giriş başarılı olduğunda misafir sepetini kullanıcının sepetine aktar
+        try {
+          await fetch('/api/store/cart/merge', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+        } catch (mergeError) {
+          console.error('Sepet aktarma hatası:', mergeError);
+          // Sepet aktarma hatası kullanıcı deneyimini etkilemeyeceği için sessizce geçiyoruz
+        }
+
         toast.success('Giriş başarılı!');
         router.push('/dashboard');
       }

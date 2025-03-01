@@ -56,10 +56,11 @@ export default function CartPage() {
   const { updateCartItemCount } = useCartStore();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login?callbackUrl=/store/cart");
-    } else if (status === "authenticated") {
-      fetchCart();
+    // Sepeti her zaman yükle
+    fetchCart();
+    
+    // Sadece oturum açıksa diğer bilgileri yükle
+    if (status === "authenticated") {
       fetchUserCredits();
       fetchPaymentMethods();
     }
@@ -122,7 +123,7 @@ export default function CartPage() {
   };
 
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
+    if (updatingItem) return;
     
     try {
       setUpdatingItem(itemId);
@@ -135,25 +136,25 @@ export default function CartPage() {
       });
 
       if (!response.ok) {
-        // Sunucudan gelen hata mesajını almak için
         const errorData = await response.json();
-        console.error("Sunucu hatası:", errorData);
         throw new Error(errorData.error || "Ürün miktarı güncellenirken bir hata oluştu");
       }
 
       // Sepeti yeniden yükle
-      await fetchCart();
+      fetchCart();
       // Sepet sayısını güncelle
       updateCartItemCount();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Ürün miktarı güncellenirken hata:", error);
-      alert("Ürün miktarı güncellenirken bir hata oluştu. Lütfen tekrar deneyin.");
+      alert(error.message || "Ürün miktarı güncellenirken bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setUpdatingItem(null);
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
+    if (deletingItem) return;
+    
     try {
       setDeletingItem(itemId);
       const response = await fetch(`/api/store/cart/items/${itemId}`, {
@@ -161,25 +162,29 @@ export default function CartPage() {
       });
 
       if (!response.ok) {
-        // Sunucudan gelen hata mesajını almak için
         const errorData = await response.json();
-        console.error("Sunucu hatası:", errorData);
         throw new Error(errorData.error || "Ürün sepetten kaldırılırken bir hata oluştu");
       }
 
       // Sepeti yeniden yükle
-      await fetchCart();
+      fetchCart();
       // Sepet sayısını güncelle
       updateCartItemCount();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Ürün sepetten kaldırılırken hata:", error);
-      alert("Ürün sepetten kaldırılırken bir hata oluştu. Lütfen tekrar deneyin.");
+      alert(error.message || "Ürün sepetten kaldırılırken bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setDeletingItem(null);
     }
   };
 
   const handleCheckout = async () => {
+    // Misafir kullanıcı ise giriş sayfasına yönlendir
+    if (status === "unauthenticated") {
+      router.push("/auth/login?callbackUrl=/store/cart");
+      return;
+    }
+    
     if (!cart || cart.items.length === 0 || !selectedPaymentMethod) return;
     
     try {
@@ -345,206 +350,326 @@ export default function CartPage() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                <div className={`rounded-xl overflow-hidden shadow-md ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-xl font-bold">Sepetinizdeki Ürünler ({cart.items.length})</h2>
+                <div className={`rounded-xl overflow-hidden shadow-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                  <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <h2 className="text-xl font-semibold">Sepet İçeriği</h2>
                   </div>
-                  
-                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {cart.items.map((item) => (
-                      <div key={item.id} className="p-6 flex flex-col md:flex-row md:items-center gap-4 group">
-                        <div className="flex-shrink-0">
-                          {item.product.imageUrl ? (
-                            <div className="relative h-20 w-20 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                              <Image
-                                src={item.product.imageUrl}
-                                alt={item.product.name}
-                                fill
-                                className="object-contain p-2"
-                              />
+
+                  {loading ? (
+                    <div className="flex justify-center items-center py-16">
+                      <Loader2 className={`h-12 w-12 animate-spin ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                        {cart.items.map((item) => (
+                          <div key={item.id} className="p-6 flex flex-col md:flex-row md:items-center gap-4 group">
+                            <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                              {item.product.imageUrl ? (
+                                <Image
+                                  src={item.product.imageUrl}
+                                  alt={item.product.name}
+                                  fill
+                                  className="object-cover object-center"
+                                />
+                              ) : (
+                                <div className={`h-full w-full flex items-center justify-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                  <ShoppingBag className={`h-10 w-10 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
+                                </div>
+                              )}
                             </div>
-                          ) : (
-                            <div className="h-20 w-20 bg-gradient-to-r from-blue-500 to-blue-700 rounded-lg flex items-center justify-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
-                              </svg>
+                            
+                            <div className="flex-grow">
+                              <h3 className="font-semibold text-lg">{item.product.name}</h3>
+                              <p className="text-blue-600 dark:text-blue-400 font-medium">
+                                {formatPrice(item.price)}
+                              </p>
                             </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex-grow">
-                          <h3 className="font-semibold text-lg">{item.product.name}</h3>
-                          <p className="text-blue-600 dark:text-blue-400 font-medium">
-                            {formatPrice(item.price)}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                            disabled={updatingItem === item.id || item.quantity <= 1}
-                            className={`p-1 rounded-full ${
-                              theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
-                            } transition-colors ${
-                              updatingItem === item.id || item.quantity <= 1 ? 'opacity-50 cursor-not-allowed' : ''
-                            }`}
-                          >
-                            <Minus className="h-4 w-4" />
-                          </button>
-                          
-                          <span className="w-8 text-center">{item.quantity}</span>
-                          
-                          <button
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                            disabled={updatingItem === item.id || item.quantity >= item.product.stock}
-                            className={`p-1 rounded-full ${
-                              theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
-                            } transition-colors ${
-                              updatingItem === item.id || item.quantity >= item.product.stock ? 'opacity-50 cursor-not-allowed' : ''
-                            }`}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        </div>
-                        
-                        <div className="text-right">
-                          <p className="font-bold">
-                            {formatPrice(item.price * item.quantity)}
-                          </p>
-                          <button
-                            onClick={() => handleRemoveItem(item.id)}
-                            disabled={deletingItem === item.id}
-                            className={`mt-2 text-red-500 hover:text-red-700 transition-colors inline-flex items-center ${
-                              deletingItem === item.id ? 'opacity-50 cursor-wait' : ''
-                            }`}
-                          >
-                            {deletingItem === item.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                            ) : (
-                              <Trash2 className="h-4 w-4 mr-1" />
-                            )}
-                            <span>Kaldır</span>
-                          </button>
-                        </div>
+                            
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                                disabled={updatingItem === item.id || item.quantity <= 1}
+                                className={`p-1 rounded-full ${
+                                  theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
+                                } transition-colors ${
+                                  updatingItem === item.id || item.quantity <= 1 ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              
+                              <span className="w-8 text-center">{item.quantity}</span>
+                              
+                              <button
+                                onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                                disabled={updatingItem === item.id || item.quantity >= item.product.stock}
+                                className={`p-1 rounded-full ${
+                                  theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
+                                } transition-colors ${
+                                  updatingItem === item.id || item.quantity >= item.product.stock ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            </div>
+                            
+                            <div className="text-right">
+                              <p className="font-bold">
+                                {formatPrice(item.price * item.quantity)}
+                              </p>
+                              <button
+                                onClick={() => handleRemoveItem(item.id)}
+                                disabled={deletingItem === item.id}
+                                className={`mt-2 text-red-500 hover:text-red-700 transition-colors inline-flex items-center ${
+                                  deletingItem === item.id ? 'opacity-50 cursor-wait' : ''
+                                }`}
+                              >
+                                {deletingItem === item.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                )}
+                                <span>Kaldır</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
               
               <div className="lg:col-span-1">
-                <div className={`rounded-xl overflow-hidden shadow-md ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                  <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-xl font-bold">Sipariş Özeti</h2>
+                <div className={`rounded-xl overflow-hidden shadow-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                  <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <h2 className="text-xl font-semibold">Sipariş Özeti</h2>
                   </div>
                   
                   <div className="p-6">
-                    <div className="flex justify-between mb-4">
-                      <span>Ara Toplam</span>
-                      <span className="font-medium">{formatPrice(cart.totalPrice)}</span>
-                    </div>
-                    
-                    <div className="border-t border-gray-200 dark:border-gray-700 my-4 pt-4">
-                      <div className="flex justify-between font-bold text-lg">
-                        <span>Toplam</span>
-                        <span className="text-blue-600 dark:text-blue-400">{formatPrice(cart.totalPrice)}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6">
-                      <h3 className="font-semibold mb-3">Ödeme Yöntemi</h3>
-                      
-                      {loadingPaymentMethods ? (
-                        <div className="flex justify-center py-4">
-                          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {paymentMethods.map((method) => (
-                            <div 
-                              key={method.id}
-                              onClick={() => setSelectedPaymentMethod(method.id)}
-                              className={`p-4 rounded-lg cursor-pointer transition-all duration-200 flex items-center ${
-                                selectedPaymentMethod === method.id
-                                  ? theme === 'dark'
-                                    ? 'bg-blue-900/30 border border-blue-500'
-                                    : 'bg-blue-50 border border-blue-200'
-                                  : theme === 'dark'
-                                    ? 'bg-gray-700 border border-gray-600 hover:bg-gray-700/80'
-                                    : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
-                              }`}
-                            >
-                              <div className="mr-3">
-                                {getPaymentMethodIcon(method.type, method.provider)}
-                              </div>
-                              <div className="flex-grow">
-                                <p className="font-medium">{method.name}</p>
-                                {method.description && (
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">{method.description}</p>
-                                )}
-                              </div>
-                              <div className="ml-2 h-5 w-5 rounded-full border-2 flex items-center justify-center">
-                                {selectedPaymentMethod === method.id && (
-                                  <div className={`h-2 w-2 rounded-full ${theme === 'dark' ? 'bg-blue-400' : 'bg-blue-600'}`}></div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      {isCreditPayment && (
-                        <div className="mt-4">
-                          <div className="flex justify-between items-center">
-                            <span>Mevcut Krediniz:</span>
-                            <span className={`font-bold ${hasEnoughCredits ? 'text-green-500' : 'text-red-500'}`}>
-                              {formatPrice(userCredits)}
-                            </span>
+                    {cart && cart.items.length > 0 ? (
+                      <>
+                        <div className="space-y-4 mb-6">
+                          <div className="flex justify-between">
+                            <span className={`${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Ara Toplam</span>
+                            <span className="font-medium">{formatPrice(cart.totalPrice)}</span>
                           </div>
-                          
-                          {!hasEnoughCredits && (
-                            <div className="mt-2 p-3 bg-red-500/10 border border-red-200 dark:border-red-900 rounded-lg text-red-600 dark:text-red-400 text-sm flex items-start">
-                              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                              <p>
-                                Yeterli krediniz bulunmamaktadır. Lütfen kredi yükleyin veya başka bir ödeme yöntemi seçin.
-                                <Link href="/dashboard/credits/add" className="block mt-1 underline">
-                                  Kredi Yükle
+                          <div className="flex justify-between font-bold text-lg">
+                            <span>Toplam</span>
+                            <span>{formatPrice(cart.totalPrice)}</span>
+                          </div>
+                        </div>
+
+                        {status === "unauthenticated" ? (
+                          <div className="space-y-4">
+                            <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                              <p className="text-sm mb-4">
+                                Siparişi tamamlamak için giriş yapmanız gerekmektedir.
+                              </p>
+                              <Link
+                                href={`/auth/login?callbackUrl=${encodeURIComponent('/store/cart')}`}
+                                className={`w-full block text-center py-3 px-4 rounded-lg font-medium ${
+                                  theme === 'dark' 
+                                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                } transition-all duration-200`}
+                              >
+                                Giriş Yap
+                              </Link>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Hesabınız yok mu?{' '}
+                                <Link 
+                                  href="/auth/register" 
+                                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                                >
+                                  Kayıt Ol
                                 </Link>
                               </p>
                             </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      <button
-                        onClick={handleCheckout}
-                        disabled={processingCheckout || isPaymentDisabled || !selectedPaymentMethod}
-                        className={`w-full mt-6 py-3 px-4 rounded-lg font-medium text-white transition-all duration-200 flex items-center justify-center ${
-                          processingCheckout || isPaymentDisabled || !selectedPaymentMethod
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700 transform hover:-translate-y-1 hover:shadow-lg'
-                        }`}
-                      >
-                        {processingCheckout ? (
-                          <>
-                            <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                            <span>İşleniyor...</span>
-                          </>
+                          </div>
                         ) : (
                           <>
-                            <CreditCard className="h-5 w-5 mr-2" />
-                            <span>Ödemeyi Tamamla</span>
+                            {/* Ödeme Yöntemleri */}
+                            <div className="mb-6">
+                              <h3 className={`text-base font-medium mb-3 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                                Ödeme Yöntemi
+                              </h3>
+                              
+                              {loadingPaymentMethods ? (
+                                <div className="flex justify-center py-4">
+                                  <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                                </div>
+                              ) : (
+                                <div className="space-y-3">
+                                  {/* Kredi ile Ödeme */}
+                                  <label className={`block relative p-4 border rounded-lg cursor-pointer transition-all ${
+                                    selectedPaymentMethod === 'credit'
+                                      ? theme === 'dark'
+                                        ? 'border-blue-500 bg-blue-900/20'
+                                        : 'border-blue-500 bg-blue-50'
+                                      : theme === 'dark'
+                                        ? 'border-gray-700 hover:border-gray-600'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                  }`}>
+                                    <input
+                                      type="radio"
+                                      name="paymentMethod"
+                                      value="credit"
+                                      checked={selectedPaymentMethod === 'credit'}
+                                      onChange={() => setSelectedPaymentMethod('credit')}
+                                      className="sr-only"
+                                    />
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center">
+                                        <div className={`p-2 rounded-full mr-3 ${
+                                          theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                                        }`}>
+                                          <Wallet className="h-5 w-5 text-blue-500" />
+                                        </div>
+                                        <div>
+                                          <p className="font-medium">Kredi ile Öde</p>
+                                          <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            Mevcut Bakiye: {formatPrice(userCredits)}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      {selectedPaymentMethod === 'credit' && (
+                                        <CheckCircle2 className="h-5 w-5 text-blue-500" />
+                                      )}
+                                    </div>
+                                    
+                                    {selectedPaymentMethod === 'credit' && !hasEnoughCredits && (
+                                      <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-start">
+                                        <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                          <p className="text-sm text-red-500 font-medium">Yetersiz bakiye</p>
+                                          <p className="text-xs text-red-400">
+                                            Bu siparişi tamamlamak için {formatPrice(cart.totalPrice - userCredits)} daha krediye ihtiyacınız var.
+                                          </p>
+                                          <Link
+                                            href="/dashboard/credits/add"
+                                            className="text-xs text-blue-500 hover:underline mt-1 inline-block"
+                                          >
+                                            Kredi Yükle
+                                          </Link>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </label>
+                                  
+                                  {/* Diğer Ödeme Yöntemleri */}
+                                  {paymentMethods.map((method) => (
+                                    <label
+                                      key={method.id}
+                                      className={`block relative p-4 border rounded-lg cursor-pointer transition-all ${
+                                        selectedPaymentMethod === method.id
+                                          ? theme === 'dark'
+                                            ? 'border-blue-500 bg-blue-900/20'
+                                            : 'border-blue-500 bg-blue-50'
+                                          : theme === 'dark'
+                                            ? 'border-gray-700 hover:border-gray-600'
+                                            : 'border-gray-200 hover:border-gray-300'
+                                      }`}
+                                    >
+                                      <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value={method.id}
+                                        checked={selectedPaymentMethod === method.id}
+                                        onChange={() => setSelectedPaymentMethod(method.id)}
+                                        className="sr-only"
+                                      />
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center">
+                                          <div className={`p-2 rounded-full mr-3 ${
+                                            theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'
+                                          }`}>
+                                            {method.provider === 'CREDIT_CARD' ? (
+                                              <CreditCard className="h-5 w-5 text-blue-500" />
+                                            ) : method.provider === 'BANK_TRANSFER' ? (
+                                              <Clock className="h-5 w-5 text-blue-500" />
+                                            ) : (
+                                              <Shield className="h-5 w-5 text-blue-500" />
+                                            )}
+                                          </div>
+                                          <div>
+                                            <p className="font-medium">{method.name}</p>
+                                            {method.description && (
+                                              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                {method.description}
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+                                        {selectedPaymentMethod === method.id && (
+                                          <CheckCircle2 className="h-5 w-5 text-blue-500" />
+                                        )}
+                                      </div>
+                                    </label>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            
+                            <button
+                              onClick={handleCheckout}
+                              disabled={
+                                !cart || 
+                                cart.items.length === 0 || 
+                                !selectedPaymentMethod || 
+                                processingCheckout ||
+                                isPaymentDisabled
+                              }
+                              className={`w-full py-3 px-4 rounded-lg font-medium flex items-center justify-center ${
+                                !cart || 
+                                cart.items.length === 0 || 
+                                !selectedPaymentMethod || 
+                                processingCheckout ||
+                                isPaymentDisabled
+                                  ? theme === 'dark'
+                                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                  : theme === 'dark'
+                                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                              } transition-all duration-200`}
+                            >
+                              {processingCheckout ? (
+                                <>
+                                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                                  İşleniyor...
+                                </>
+                              ) : (
+                                <>
+                                  Siparişi Tamamla
+                                </>
+                              )}
+                            </button>
                           </>
                         )}
-                      </button>
-                      
-                      {isPaymentDisabled && (
-                        <p className="text-center text-sm text-red-500 mt-2">
-                          Yeterli krediniz bulunmamaktadır.
+                      </>
+                    ) : (
+                      <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        <p className="text-center">
+                          Sepetinizde ürün bulunmuyor.
                         </p>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
+                </div>
+                
+                {/* Güvenli Ödeme Bilgisi */}
+                <div className={`mt-4 p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
+                  <div className="flex items-center mb-2">
+                    <Shield className={`h-5 w-5 mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+                    <h3 className="font-medium">Güvenli Ödeme</h3>
+                  </div>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Tüm ödemeleriniz 256-bit SSL sertifikası ile şifrelenerek korunmaktadır.
+                  </p>
                 </div>
               </div>
             </div>
@@ -552,12 +677,7 @@ export default function CartPage() {
         </div>
       </div>
       <Footer />
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          className: theme === 'dark' ? '!bg-gray-800 !text-white' : '',
-        }}
-      />
+      <Toaster position="bottom-center" />
     </div>
   );
 } 

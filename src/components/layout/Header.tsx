@@ -21,6 +21,7 @@ import {
   ChartBarIcon,
   CheckCircleIcon,
   ShoppingBagIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
@@ -117,11 +118,15 @@ export function Header() {
   const [miniCart, setMiniCart] = useState<MiniCart | null>(null);
   const [loadingMiniCart, setLoadingMiniCart] = useState(false);
   const [showMiniCart, setShowMiniCart] = useState(false);
+  const [mobileOnayMenuOpen, setMobileOnayMenuOpen] = useState(false);
 
   useEffect(() => {
+    // Oturum durumundan bağımsız olarak sepet sayısını güncelle
+    updateCartItemCount();
+    
+    // Sadece oturum açıksa kredileri güncelle
     if (session) {
       updateCredits();
-      updateCartItemCount();
     }
   }, [session, updateCredits, updateCartItemCount]);
 
@@ -130,8 +135,6 @@ export function Header() {
   };
 
   const fetchMiniCart = async () => {
-    if (!session) return;
-    
     try {
       setLoadingMiniCart(true);
       const response = await fetch("/api/store/cart");
@@ -185,7 +188,108 @@ export function Header() {
               </Link>
             </div>
 
-            <div className="flex lg:hidden">
+            <div className="flex lg:hidden items-center gap-2">
+              <div className="relative">
+                <button
+                  onClick={toggleMiniCart}
+                  className={`relative p-2.5 rounded-md ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}
+                >
+                  <span className="sr-only">Sepeti aç</span>
+                  <ShoppingBagIcon className="h-6 w-6" aria-hidden="true" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {itemCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Mobil Mini Sepet */}
+                {showMiniCart && (
+                  <div className={`absolute right-0 z-[60] mt-3 w-80 transform px-2 sm:px-0 transition-all duration-200`}>
+                    <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                        <div className="flex items-center justify-between">
+                          <h3 className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            Sepetim ({itemCount} ürün)
+                          </h3>
+                          <button 
+                            onClick={() => setShowMiniCart(false)}
+                            className={`p-1 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                          >
+                            <XMarkIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className={`max-h-[calc(100vh-200px)] overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                        {loadingMiniCart ? (
+                          <div className="flex justify-center items-center py-8">
+                            <Loader2 className={`h-8 w-8 animate-spin ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                          </div>
+                        ) : miniCart && miniCart.items.length > 0 ? (
+                          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {miniCart.items.map((item) => (
+                              <div key={item.id} className="flex items-center gap-3 p-3">
+                                <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                                  {item.product.imageUrl ? (
+                                    <Image
+                                      src={item.product.imageUrl}
+                                      alt={item.product.name}
+                                      fill
+                                      className="object-cover object-center"
+                                    />
+                                  ) : (
+                                    <div className={`h-full w-full flex items-center justify-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                      <ShoppingBagIcon className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                    {item.product.name}
+                                  </p>
+                                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {item.quantity} x {formatPrice(item.price)}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className={`py-8 px-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            <ShoppingBagIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p>Sepetinizde ürün bulunmuyor</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {miniCart && miniCart.items.length > 0 && (
+                        <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-4 py-3`}>
+                          <div className="flex justify-between items-center mb-3">
+                            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                              Toplam
+                            </span>
+                            <span className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                              {formatPrice(miniCart.totalPrice)}
+                            </span>
+                          </div>
+                          <Link
+                            href="/store/cart"
+                            onClick={() => setShowMiniCart(false)}
+                            className={`block w-full text-center text-sm font-medium px-4 py-2 rounded-lg 
+                              ${theme === 'dark' 
+                                ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                              } transition-all duration-200 shadow-sm`}
+                          >
+                            Sepete Git
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
               <Popover.Button className={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                 <span className="sr-only">Menüyü aç</span>
                 <Bars3Icon className="h-6 w-6" aria-hidden="true" />
@@ -278,123 +382,115 @@ export function Header() {
             </div>
 
             <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
-              {session && (
-                <div className="relative">
-                  <button
-                    onClick={toggleMiniCart}
-                    className={`relative p-2 rounded-lg transition-all duration-200 ${
-                      theme === 'dark' 
-                        ? 'bg-gray-700 text-blue-400 hover:bg-gray-600' 
-                        : 'bg-gray-100 text-blue-600 hover:bg-gray-200'
-                    }`}
-                    aria-label="Sepet"
-                  >
-                    <ShoppingBagIcon className="h-5 w-5" />
-                    {itemCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                        {itemCount}
-                      </span>
-                    )}
-                  </button>
+              <div className="relative">
+                <button
+                  onClick={toggleMiniCart}
+                  className={`relative p-2 rounded-lg transition-all duration-200 ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 text-blue-400 hover:bg-gray-600' 
+                      : 'bg-gray-100 text-blue-600 hover:bg-gray-200'
+                  }`}
+                  aria-label="Sepet"
+                >
+                  <ShoppingBagIcon className="h-5 w-5" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {itemCount}
+                    </span>
+                  )}
+                </button>
 
-                  {/* Mini Sepet */}
-                  {showMiniCart && (
-                    <div className={`absolute right-0 z-20 mt-3 w-80 transform px-2 sm:px-0 transition-all duration-200`}>
-                      <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-                          <div className="flex items-center justify-between">
-                            <h3 className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                              Sepetim ({itemCount} ürün)
-                            </h3>
-                            <button 
-                              onClick={() => setShowMiniCart(false)}
-                              className={`p-1 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                            >
-                              <XMarkIcon className="h-5 w-5" />
-                            </button>
+                {/* Mini Sepet */}
+                {showMiniCart && (
+                  <div className={`absolute right-0 z-20 mt-3 w-80 transform px-2 sm:px-0 transition-all duration-200`}>
+                    <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                      <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                        <div className="flex items-center justify-between">
+                          <h3 className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            Sepetim ({itemCount} ürün)
+                          </h3>
+                          <button 
+                            onClick={() => setShowMiniCart(false)}
+                            className={`p-1 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                          >
+                            <XMarkIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className={`max-h-80 overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                        {loadingMiniCart ? (
+                          <div className="flex justify-center items-center py-8">
+                            <Loader2 className={`h-8 w-8 animate-spin ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
                           </div>
-                        </div>
-                        
-                        <div className={`max-h-80 overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                          {loadingMiniCart ? (
-                            <div className="flex justify-center items-center py-8">
-                              <Loader2 className={`h-8 w-8 animate-spin ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                            </div>
-                          ) : miniCart && miniCart.items.length > 0 ? (
-                            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                              {miniCart.items.slice(0, 3).map((item) => (
-                                <div key={item.id} className="flex items-center gap-3 p-3">
-                                  <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-                                    {item.product.imageUrl ? (
-                                      <Image
-                                        src={item.product.imageUrl}
-                                        alt={item.product.name}
-                                        fill
-                                        className="object-cover object-center"
-                                      />
-                                    ) : (
-                                      <div className={`h-full w-full flex items-center justify-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                                        <ShoppingBagIcon className={`h-8 w-8 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                      {item.product.name}
-                                    </p>
-                                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                                      {item.quantity} x {formatPrice(item.price)}
-                                    </p>
-                                  </div>
-                                  <div className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-                                    {formatPrice(item.price * item.quantity)}
-                                  </div>
+                        ) : miniCart && miniCart.items.length > 0 ? (
+                          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {miniCart.items.map((item) => (
+                              <div key={item.id} className="flex items-center gap-3 p-3">
+                                <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                                  {item.product.imageUrl ? (
+                                    <Image
+                                      src={item.product.imageUrl}
+                                      alt={item.product.name}
+                                      fill
+                                      className="object-cover object-center"
+                                    />
+                                  ) : (
+                                    <div className={`h-full w-full flex items-center justify-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                      <ShoppingBagIcon className={`h-8 w-8 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
+                                    </div>
+                                  )}
                                 </div>
-                              ))}
-                              
-                              {miniCart.items.length > 3 && (
-                                <div className={`p-3 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                                  +{miniCart.items.length - 3} diğer ürün
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                    {item.product.name}
+                                  </p>
+                                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    {item.quantity} x {formatPrice(item.price)}
+                                  </p>
                                 </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className={`py-8 px-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                              <ShoppingBagIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                              <p>Sepetinizde ürün bulunmuyor</p>
-                            </div>
-                          )}
-                        </div>
-                        
-                        {miniCart && miniCart.items.length > 0 && (
-                          <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-4 py-3`}>
-                            <div className="flex justify-between items-center mb-3">
-                              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                                Toplam
-                              </span>
-                              <span className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                {formatPrice(miniCart.totalPrice)}
-                              </span>
-                            </div>
-                            <Link
-                              href="/store/cart"
-                              onClick={() => setShowMiniCart(false)}
-                              className={`block w-full text-center text-sm font-medium px-4 py-2 rounded-lg 
-                                ${theme === 'dark' 
-                                  ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                                  : 'bg-blue-500 hover:bg-blue-600 text-white'
-                                } transition-all duration-200 shadow-sm`}
-                            >
-                              Sepete Git
-                            </Link>
+                                <div className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                                  {formatPrice(item.price * item.quantity)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className={`py-8 px-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            <ShoppingBagIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p>Sepetinizde ürün bulunmuyor</p>
                           </div>
                         )}
                       </div>
+                      
+                      {miniCart && miniCart.items.length > 0 && (
+                        <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-4 py-3`}>
+                          <div className="flex justify-between items-center mb-3">
+                            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                              Toplam
+                            </span>
+                            <span className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                              {formatPrice(miniCart.totalPrice)}
+                            </span>
+                          </div>
+                          <Link
+                            href="/store/cart"
+                            onClick={() => setShowMiniCart(false)}
+                            className={`block w-full text-center text-sm font-medium px-4 py-2 rounded-lg 
+                              ${theme === 'dark' 
+                                ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                              } transition-all duration-200 shadow-sm`}
+                          >
+                            Sepete Git
+                          </Link>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
-
+                  </div>
+                )}
+              </div>
+              
               <button
                 onClick={toggleTheme}
                 className={`p-2 rounded-lg transition-all duration-200 ${
@@ -529,219 +625,243 @@ export function Header() {
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Popover.Panel focus className={`absolute inset-x-0 top-0 origin-top-right transform p-2 transition md:hidden ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-              <div className={`rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                <div className="px-5 pt-4 pb-6">
-                  <div className="flex items-center justify-between">
-                    <div>
+            <Popover.Panel focus className="fixed inset-x-0 top-0 h-screen transform transition lg:hidden">
+              <div className={`h-full overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                <div className="flex items-center justify-between px-6 pt-4 pb-4">
+                  <div>
+                    <Link href="/" className="flex items-center space-x-3">
                       <Image
-                        className="h-8 w-auto"
                         src="/logo.png"
-                        alt="Logo"
+                        alt="Microsoft Onay"
                         width={32}
                         height={32}
-                        priority
+                        className="w-8 h-8"
                       />
-                    </div>
-                    <div className="-mr-2">
-                      <Popover.Button className={`inline-flex items-center justify-center rounded-md p-2 ${theme === 'dark' ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-500' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-500'}`}>
-                        <span className="sr-only">Menüyü kapat</span>
-                        <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                      </Popover.Button>
-                    </div>
+                      <span className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        Microsoft Onay
+                      </span>
+                    </Link>
                   </div>
-                  <div className="mt-6">
-                    <nav className="grid gap-y-4">
-                      {session && (
-                        <div className={`p-5 rounded-xl ${theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900' : 'bg-gradient-to-br from-white to-gray-50'} shadow-lg ring-1 ring-black/5 backdrop-blur-sm`}>
-                          <div className="flex items-center gap-4">
-                            <div className={`p-2.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} ring-1 ring-black/5 shadow-sm`}>
-                              <UserCircleIcon className={`h-6 w-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                            </div>
-                            <div>
-                              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
-                                {session.user?.email}
-                              </p>
-                              <div className={`flex items-center gap-1.5 mt-0.5`}>
-                                <CurrencyDollarIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                                <span className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-                                  {credits} Kredi
-                                </span>
-                              </div>
-                            </div>
+                  <div>
+                    <Popover.Button className={`-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <span className="sr-only">Menüyü kapat</span>
+                      <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                    </Popover.Button>
+                  </div>
+                </div>
+                <div className="space-y-1 px-4 pb-4">
+                  {/* Mevcut menü öğeleri */}
+                  {session && (
+                    <div className={`p-5 rounded-xl ${theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900' : 'bg-gradient-to-br from-white to-gray-50'} shadow-lg ring-1 ring-black/5 backdrop-blur-sm`}>
+                      <div className="flex items-center gap-4">
+                        <div className={`p-2.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} ring-1 ring-black/5 shadow-sm`}>
+                          <UserCircleIcon className={`h-6 w-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                        </div>
+                        <div>
+                          <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+                            {session.user?.email}
+                          </p>
+                          <div className={`flex items-center gap-1.5 mt-0.5`}>
+                            <CurrencyDollarIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                              {credits} Kredi
+                            </span>
                           </div>
-                          
-                          <div className="mt-4 flex justify-between">
-                            <div className="relative">
-                              <button
-                                onClick={toggleMiniCart}
-                                className={`relative flex items-center gap-2 px-4 py-2 rounded-lg ${
-                                  theme === 'dark' 
-                                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
-                                    : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                                } transition-colors duration-200`}
-                              >
-                                <ShoppingBagIcon className="h-5 w-5" />
-                                <span>Sepetim</span>
-                                {itemCount > 0 && (
-                                  <span className="ml-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                                    {itemCount}
-                                  </span>
-                                )}
-                              </button>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 flex justify-between">
+                        <div className="relative">
+                          <button
+                            onClick={toggleMiniCart}
+                            className={`relative flex items-center gap-2 px-4 py-2 rounded-lg ${
+                              theme === 'dark' 
+                                ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                            } transition-colors duration-200`}
+                          >
+                            <ShoppingBagIcon className="h-5 w-5" />
+                            <span>Sepetim</span>
+                            {itemCount > 0 && (
+                              <span className="ml-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                {itemCount}
+                              </span>
+                            )}
+                          </button>
 
-                              {/* Mobil Mini Sepet */}
-                              {showMiniCart && (
-                                <div className={`absolute left-0 z-20 mt-3 w-72 transform px-2 sm:px-0 transition-all duration-200`}>
-                                  <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
-                                    <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-                                      <div className="flex items-center justify-between">
-                                        <h3 className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                          Sepetim ({itemCount} ürün)
-                                        </h3>
-                                        <button 
-                                          onClick={() => setShowMiniCart(false)}
-                                          className={`p-1 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                                        >
-                                          <XMarkIcon className="h-5 w-5" />
-                                        </button>
-                                      </div>
+                          {/* Mobil Mini Sepet */}
+                          {showMiniCart && (
+                            <div className={`absolute left-0 z-20 mt-3 w-72 transform px-2 sm:px-0 transition-all duration-200`}>
+                              <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+                                <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                                  <div className="flex items-center justify-between">
+                                    <h3 className={`text-base font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                      Sepetim ({itemCount} ürün)
+                                    </h3>
+                                    <button 
+                                      onClick={() => setShowMiniCart(false)}
+                                      className={`p-1 rounded-full ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                                    >
+                                      <XMarkIcon className="h-5 w-5" />
+                                    </button>
+                                  </div>
+                                </div>
+                                
+                                <div className={`max-h-80 overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+                                  {loadingMiniCart ? (
+                                    <div className="flex justify-center items-center py-8">
+                                      <Loader2 className={`h-8 w-8 animate-spin ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
                                     </div>
-                                    
-                                    <div className={`max-h-80 overflow-y-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                                      {loadingMiniCart ? (
-                                        <div className="flex justify-center items-center py-8">
-                                          <Loader2 className={`h-8 w-8 animate-spin ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                                        </div>
-                                      ) : miniCart && miniCart.items.length > 0 ? (
-                                        <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                                          {miniCart.items.slice(0, 3).map((item) => (
-                                            <div key={item.id} className="flex items-center gap-3 p-3">
-                                              <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-                                                {item.product.imageUrl ? (
-                                                  <Image
-                                                    src={item.product.imageUrl}
-                                                    alt={item.product.name}
-                                                    fill
-                                                    className="object-cover object-center"
-                                                  />
-                                                ) : (
-                                                  <div className={`h-full w-full flex items-center justify-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                                                    <ShoppingBagIcon className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
-                                                  </div>
-                                                )}
+                                  ) : miniCart && miniCart.items.length > 0 ? (
+                                    <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                      {miniCart.items.slice(0, 3).map((item) => (
+                                        <div key={item.id} className="flex items-center gap-3 p-3">
+                                          <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
+                                            {item.product.imageUrl ? (
+                                              <Image
+                                                src={item.product.imageUrl}
+                                                alt={item.product.name}
+                                                fill
+                                                className="object-cover object-center"
+                                              />
+                                            ) : (
+                                              <div className={`h-full w-full flex items-center justify-center ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                                                <ShoppingBagIcon className={`h-6 w-6 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
                                               </div>
-                                              <div className="flex-1 min-w-0">
-                                                <p className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                                  {item.product.name}
-                                                </p>
-                                                <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                  {item.quantity} x {formatPrice(item.price)}
-                                                </p>
-                                              </div>
-                                            </div>
-                                          ))}
-                                          
-                                          {miniCart.items.length > 3 && (
-                                            <div className={`p-3 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                                              +{miniCart.items.length - 3} diğer ürün
-                                            </div>
-                                          )}
+                                            )}
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className={`text-sm font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                              {item.product.name}
+                                            </p>
+                                            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                              {item.quantity} x {formatPrice(item.price)}
+                                            </p>
+                                          </div>
                                         </div>
-                                      ) : (
-                                        <div className={`py-8 px-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                                          <ShoppingBagIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                          <p>Sepetinizde ürün bulunmuyor</p>
+                                      ))}
+                                      
+                                      {miniCart.items.length > 3 && (
+                                        <div className={`p-3 text-center text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                          +{miniCart.items.length - 3} diğer ürün
                                         </div>
                                       )}
                                     </div>
-                                    
-                                    {miniCart && miniCart.items.length > 0 && (
-                                      <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-4 py-3`}>
-                                        <div className="flex justify-between items-center mb-3">
-                                          <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                                            Toplam
-                                          </span>
-                                          <span className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                            {formatPrice(miniCart.totalPrice)}
-                                          </span>
-                                        </div>
-                                        <Link
-                                          href="/store/cart"
-                                          onClick={() => setShowMiniCart(false)}
-                                          className={`block w-full text-center text-sm font-medium px-4 py-2 rounded-lg 
-                                            ${theme === 'dark' 
-                                              ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                                              : 'bg-blue-500 hover:bg-blue-600 text-white'
-                                            } transition-all duration-200 shadow-sm`}
-                                        >
-                                          Sepete Git
-                                        </Link>
-                                      </div>
-                                    )}
-                                  </div>
+                                  ) : (
+                                    <div className={`py-8 px-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                      <ShoppingBagIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                      <p>Sepetinizde ürün bulunmuyor</p>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                                
+                                {miniCart && miniCart.items.length > 0 && (
+                                  <div className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-4 py-3`}>
+                                    <div className="flex justify-between items-center mb-3">
+                                      <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                                        Toplam
+                                      </span>
+                                      <span className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                        {formatPrice(miniCart.totalPrice)}
+                                      </span>
+                                    </div>
+                                    <Link
+                                      href="/store/cart"
+                                      onClick={() => setShowMiniCart(false)}
+                                      className={`block w-full text-center text-sm font-medium px-4 py-2 rounded-lg 
+                                        ${theme === 'dark' 
+                                          ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                                          : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                        } transition-all duration-200 shadow-sm`}
+                                    >
+                                      Sepete Git
+                                    </Link>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            
-                            <Link
-                              href="/dashboard/credits/add"
-                              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                                theme === 'dark' 
-                                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                                  : 'bg-blue-500 text-white hover:bg-blue-600'
-                              } transition-colors duration-200`}
+                          )}
+                        </div>
+                        
+                        <Link
+                          href="/dashboard/credits/add"
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                            theme === 'dark' 
+                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                              : 'bg-blue-500 text-white hover:bg-blue-600'
+                          } transition-colors duration-200`}
+                        >
+                          <CurrencyDollarIcon className="h-5 w-5" />
+                          <span>Kredi Yükle</span>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className={`space-y-2 pb-4 pt-2 ${theme === 'dark' ? 'border-b border-gray-800' : 'border-b border-gray-100'}`}>
+                    <div className="px-3 flex items-center justify-between">
+                      <p className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Ana Menü
+                      </p>
+                      <div className={`h-px flex-grow mx-3 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
+                    </div>
+                    <div className="space-y-1 px-2">
+                      <Link
+                        href="/"
+                        className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
+                          ${theme === 'dark' 
+                            ? 'text-gray-300 hover:bg-gray-800/80' 
+                            : 'text-gray-900 hover:bg-gray-50'
+                          } transition-all duration-200`}
+                      >
+                        <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
+                          <HomeIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                        </span>
+                        Ana Sayfa
+                      </Link>
+
+                      <Link
+                        href="/store"
+                        className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
+                          ${theme === 'dark' 
+                            ? 'text-gray-300 hover:bg-gray-800/80' 
+                            : 'text-gray-900 hover:bg-gray-50'
+                          } transition-all duration-200`}
+                      >
+                        <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
+                          <ShoppingBagIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                        </span>
+                        Mağaza
+                      </Link>
+
+                      {session && (
+                        <div className="space-y-1">
+                          <div className="relative">
+                            <button
+                              onClick={() => setMobileOnayMenuOpen(!mobileOnayMenuOpen)}
+                              className={`w-full group flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
+                                ${theme === 'dark' 
+                                  ? 'text-gray-300 hover:bg-gray-800/80' 
+                                  : 'text-gray-900 hover:bg-gray-50'
+                                } transition-all duration-200`}
                             >
-                              <CurrencyDollarIcon className="h-5 w-5" />
-                              <span>Kredi Yükle</span>
-                            </Link>
-                          </div>
-                        </div>
-                      )}
+                              <div className="flex items-center gap-3">
+                                <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
+                                  <CheckCircleIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                                </span>
+                                Onay İşlemleri
+                              </div>
+                              <ChevronDownIcon
+                                className={`h-5 w-5 transition-transform duration-200 ${mobileOnayMenuOpen ? 'transform rotate-180' : ''}`}
+                              />
+                            </button>
 
-                      <div className={`space-y-2 pb-4 pt-2 ${theme === 'dark' ? 'border-b border-gray-800' : 'border-b border-gray-100'}`}>
-                        <div className="px-3 flex items-center justify-between">
-                          <p className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Ana Menü
-                          </p>
-                          <div className={`h-px flex-grow mx-3 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
-                        </div>
-                        <div className="space-y-1 px-2">
-                          <Link
-                            href="/"
-                            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
-                              ${theme === 'dark' 
-                                ? 'text-gray-300 hover:bg-gray-800/80' 
-                                : 'text-gray-900 hover:bg-gray-50'
-                              } transition-all duration-200`}
-                          >
-                            <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
-                              <HomeIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                            </span>
-                            Ana Sayfa
-                          </Link>
-
-                          <Link
-                            href="/store"
-                            className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
-                              ${theme === 'dark' 
-                                ? 'text-gray-300 hover:bg-gray-800/80' 
-                                : 'text-gray-900 hover:bg-gray-50'
-                              } transition-all duration-200`}
-                          >
-                            <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
-                              <ShoppingBagIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                            </span>
-                            Mağaza
-                          </Link>
-
-                          {session && (
-                            <div className="space-y-1">
+                            <div className={`mt-1 space-y-1 ${mobileOnayMenuOpen ? 'block' : 'hidden'}`}>
                               {products.map((item) => (
                                 <Link
                                   key={item.name}
                                   href={item.href}
-                                  className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
+                                  className={`group flex items-center gap-3 rounded-xl px-8 py-2.5 text-sm font-medium 
                                     ${theme === 'dark' 
                                       ? 'text-gray-300 hover:bg-gray-800/80' 
                                       : 'text-gray-900 hover:bg-gray-50'
@@ -780,7 +900,12 @@ export function Header() {
                                           : 'text-blue-600'
                                     }`} />
                                   </span>
-                                  {item.name}
+                                  <div>
+                                    <p className="font-medium">{item.name}</p>
+                                    <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                      {item.description}
+                                    </p>
+                                  </div>
                                   {item.highlight && (
                                     <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
                                       item.highlightColor === 'blue'
@@ -797,73 +922,79 @@ export function Header() {
                                 </Link>
                               ))}
                             </div>
-                          )}
+                          </div>
+                        </div>
+                      )}
 
+                      <Link
+                        href="/about"
+                        className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
+                          ${theme === 'dark' 
+                            ? 'text-gray-300 hover:bg-gray-800/80' 
+                            : 'text-gray-900 hover:bg-gray-50'
+                          } transition-all duration-200`}
+                      >
+                        <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
+                          <InformationCircleIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                        </span>
+                        Hakkında
+                      </Link>
+                    </div>
+                  </div>
+
+                  {session && (
+                    <div className="space-y-2 pt-2">
+                      <div className="px-3 flex items-center justify-between">
+                        <p className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                          Hesap
+                        </p>
+                        <div className={`h-px flex-grow mx-3 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
+                      </div>
+                      <div className="space-y-1 px-2">
+                        {userMenuItems.map((item) => (
                           <Link
-                            href="/about"
+                            key={item.name}
+                            href={item.href}
                             className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
                               ${theme === 'dark' 
                                 ? 'text-gray-300 hover:bg-gray-800/80' 
                                 : 'text-gray-900 hover:bg-gray-50'
                               } transition-all duration-200`}
-                          >
-                            <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
-                              <InformationCircleIcon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                            </span>
-                            Hakkında
-                          </Link>
-                        </div>
+                            >
+                              <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
+                                <item.icon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                              </span>
+                              {item.name}
+                            </Link>
+                          ))}
                       </div>
+                    </div>
+                  )}
 
-                      {session && (
-                        <div className="space-y-2 pt-2">
-                          <div className="px-3 flex items-center justify-between">
-                            <p className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                              Hesap
-                            </p>
-                            <div className={`h-px flex-grow mx-3 ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`} />
-                          </div>
-                          <div className="space-y-1 px-2">
-                            {userMenuItems.map((item) => (
-                              <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium 
-                                  ${theme === 'dark' 
-                                    ? 'text-gray-300 hover:bg-gray-800/80' 
-                                    : 'text-gray-900 hover:bg-gray-50'
-                                  } transition-all duration-200`}
-                              >
-                                <span className={`p-1.5 rounded-lg ${theme === 'dark' ? 'bg-gray-800 group-hover:bg-gray-700' : 'bg-white group-hover:bg-gray-100'} ring-1 ring-black/5 shadow-sm transition-colors duration-200`}>
-                                  <item.icon className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                                </span>
-                                {item.name}
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </nav>
-                  </div>
-                </div>
-                <div className={`px-5 py-6 ${theme === 'dark' ? 'bg-gradient-to-b from-gray-800 to-gray-900' : 'bg-gradient-to-b from-gray-50 to-gray-100'}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <button
-                      onClick={toggleTheme}
-                      className={`p-2.5 rounded-xl transition-all duration-200 ${
-                        theme === 'dark' 
-                          ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700 ring-1 ring-yellow-400/20' 
-                          : 'bg-white text-gray-600 hover:bg-gray-50 ring-1 ring-black/5'
-                      } shadow-sm`}
-                    >
-                      {theme === 'dark' ? (
-                        <SunIcon className="h-5 w-5" />
-                      ) : (
-                        <MoonIcon className="h-5 w-5" />
-                      )}
-                    </button>
-                  </div>
-                  <div className="space-y-2.5">
+                  <div className="space-y-2.5 px-4 pb-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <button
+                        onClick={toggleTheme}
+                        className={`flex-1 flex items-center justify-center gap-x-2 rounded-xl ${
+                          theme === 'dark' 
+                            ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        } px-4 py-3 text-sm font-semibold transition-all duration-200`}
+                      >
+                        {theme === 'dark' ? (
+                          <>
+                            <SunIcon className="h-5 w-5" />
+                            Açık Tema
+                          </>
+                        ) : (
+                          <>
+                            <MoonIcon className="h-5 w-5" />
+                            Koyu Tema
+                          </>
+                        )}
+                      </button>
+                    </div>
+
                     {session ? (
                       <button
                         onClick={handleSignOut}

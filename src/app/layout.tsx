@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
-        <SessionProvider>
+        <SessionProvider refetchInterval={0} refetchOnWindowFocus={false}>
           <ThemeProvider>{children}</ThemeProvider>
         </SessionProvider>
       </body>
