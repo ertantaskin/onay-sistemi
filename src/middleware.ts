@@ -18,6 +18,12 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Mağaza sayfaları için erişim kontrolü - misafir kullanıcılar da erişebilmeli
+  if (request.nextUrl.pathname.startsWith('/store')) {
+    // Burada herhangi bir kısıtlama yapmıyoruz, herkes erişebilir
+    return NextResponse.next();
+  }
+
   // Oturum açıkken giriş ve kayıt sayfalarına erişimi engelle
   if ((request.nextUrl.pathname.startsWith('/auth/login') || 
        request.nextUrl.pathname.startsWith('/auth/register')) && 
@@ -34,5 +40,6 @@ export const config = {
     '/admin/:path*',
     '/auth/login',
     '/auth/register',
+    '/store/:path*',
   ],
 }; 
