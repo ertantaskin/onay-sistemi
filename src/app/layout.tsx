@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./ThemeContext";
 import { SessionProvider } from "next-auth/react";
+import { SessionTimeout } from '@/components/SessionTimeout';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,7 +17,10 @@ export default function RootLayout({
     <html lang="tr" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <SessionProvider refetchInterval={0} refetchOnWindowFocus={false}>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <SessionTimeout />
+            {children}
+          </ThemeProvider>
         </SessionProvider>
       </body>
     </html>

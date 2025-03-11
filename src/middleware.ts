@@ -1,39 +1,38 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request });
-  const { pathname } = request.nextUrl;
-
-  // Admin sayfalarına erişim kontrolü
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+  
+  // Korumalı rotalar için kontrol
+  if (request.nextUrl.pathname.startsWith('/dashboard') || 
+      request.nextUrl.pathname.startsWith('/admin')) {
     if (!token) {
-      return NextResponse.redirect(new URL('/admin/login', request.url));
+      return NextResponse.redirect(new URL('/auth/login', request.url));
     }
 
-    if (!token.isAdmin) {
+    // Admin sayfaları için yetki kontrolü
+    if (request.nextUrl.pathname.startsWith('/admin') && !token.isAdmin) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 
-  // Dashboard sayfalarına erişim kontrolü
-  if (pathname.startsWith('/dashboard')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
-  }
-
-  // Admin login sayfasına erişim kontrolü
-  if (pathname === '/admin/login') {
-    if (token?.isAdmin) {
-      return NextResponse.redirect(new URL('/admin', request.url));
-    }
+  // Oturum açıkken giriş ve kayıt sayfalarına erişimi engelle
+  if ((request.nextUrl.pathname.startsWith('/auth/login') || 
+       request.nextUrl.pathname.startsWith('/auth/register')) && 
+      token) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*']
+  matcher: [
+    '/dashboard/:path*',
+    '/admin/:path*',
+    '/auth/login',
+    '/auth/register',
+  ],
 }; 

@@ -34,6 +34,17 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model ActiveSession {
+  id            String   @id @default(cuid())
+  userId        String
+  sessionToken  String   @unique
+  lastActivity  DateTime @default(now())
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 model User {
   id                 String              @id @default(cuid())
   name               String?
@@ -52,6 +63,7 @@ model User {
   creditTransactions CreditTransaction[]
   orders             Order[]
   sessions           Session[]
+  activeSessions     ActiveSession[]
   tickets            Ticket[]
   ticketMessages     TicketMessage[]
   transactions       Transaction[]

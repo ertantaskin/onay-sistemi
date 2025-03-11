@@ -9,8 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const cookieStore = cookies();
-    const guestCartId = cookieStore.get('guestCartId')?.value;
+    const cookieStore = await cookies();
+    const guestCartId = (await cookieStore.get('guestCartId'))?.value;
 
     // Kullanıcı giriş yapmışsa
     if (session && session.user) {
@@ -99,8 +99,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const cookieStore = cookies();
-    let guestCartId = cookieStore.get('guestCartId')?.value;
+    const cookieStore = await cookies();
+    let guestCartId = (await cookieStore.get('guestCartId'))?.value;
     
     const { productId, quantity } = await request.json();
 
