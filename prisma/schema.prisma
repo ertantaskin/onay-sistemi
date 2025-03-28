@@ -52,11 +52,12 @@ model User {
   emailVerified      DateTime?
   image              String?
   password           String
-  credits            Int                 @default(0)
+  credits            Float               @default(0)
   role               String              @default("user")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   isAdmin            Boolean             @default(false)
+  billingDetails     Json?               @default("{}")
   accounts           Account[]
   approvals          Approval[]
   couponUsages       CouponUsage[]

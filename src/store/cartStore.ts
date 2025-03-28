@@ -3,14 +3,21 @@ import { create } from 'zustand';
 interface CartStore {
   itemCount: number;
   setItemCount: (count: number) => void;
-  updateCartItemCount: () => Promise<void>;
+  updateCartItemCount: (count?: number) => Promise<void>;
 }
 
 export const useCartStore = create<CartStore>((set) => ({
   itemCount: 0,
   setItemCount: (count) => set({ itemCount: count }),
-  updateCartItemCount: async () => {
+  updateCartItemCount: async (count?: number) => {
     try {
+      // Eğer count parametresi verilmişse, direkt olarak o değeri kullan
+      if (count !== undefined) {
+        set({ itemCount: count });
+        return;
+      }
+      
+      // Değilse API'den sepet bilgisini al
       const response = await fetch('/api/store/cart');
       
       if (!response.ok) {

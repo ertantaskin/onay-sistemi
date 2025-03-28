@@ -18,11 +18,8 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Mağaza sayfaları için erişim kontrolü - misafir kullanıcılar da erişebilmeli
-  if (request.nextUrl.pathname.startsWith('/store')) {
-    // Burada herhangi bir kısıtlama yapmıyoruz, herkes erişebilir
-    return NextResponse.next();
-  }
+  // Mağaza sayfaları için erişim kontrolü - artık herhangi bir kısıtlama yok
+  // Store ile ilgili kısıtlamayı tamamen kaldırdık, herkes erişebilir
 
   // Oturum açıkken giriş ve kayıt sayfalarına erişimi engelle
   if ((request.nextUrl.pathname.startsWith('/auth/login') || 

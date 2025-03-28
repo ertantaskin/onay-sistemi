@@ -8,17 +8,27 @@ import { cookies } from "next/headers";
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const cookieStore = await cookies();
-    const guestCartId = cookieStore.get('guestCartId')?.value;
-
-    // Kullanıcı giriş yapmamışsa veya misafir sepeti yoksa işlem yapma
-    if (!session || !session.user || !guestCartId) {
+    
+    // Kullanıcı giriş yapmamışsa işlemi reddet
+    if (!session || !session.user) {
       return NextResponse.json(
-        { error: "Kullanıcı oturumu veya misafir sepeti bulunamadı" },
-        { status: 400 }
+        { error: "Bu işlem için giriş yapmanız gerekiyor" },
+        { status: 401 }
       );
     }
-
+    
+    const cookieStore = await cookies();
+    const guestCartId = (await cookieStore.get('guestCartId'))?.value;
+    
+    // Misafir sepeti yoksa işlem yapma, sorun olmadan başarılı döndür
+    if (!guestCartId) {
+      return NextResponse.json({
+        success: true,
+        message: "Aktarılacak misafir sepeti bulunmadı",
+        itemsTransferred: 0
+      });
+    }
+    
     // Misafir sepetini bul
     const guestCart = await prisma.guestCart.findUnique({
       where: {
@@ -32,84 +42,84 @@ export async function POST(request: NextRequest) {
         },
       },
     });
-
-    // Misafir sepeti yoksa veya boşsa işlem yapma
-    if (!guestCart || guestCart.items.length === 0) {
-      return NextResponse.json(
-        { message: "Aktarılacak misafir sepeti bulunamadı veya sepet boş" },
-        { status: 200 }
-      );
+    
+    // Misafir sepeti yoksa veya boşsa, işlem yapma
+    if (!guestCart || !guestCart.items || guestCart.items.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: "Aktarılacak ürün bulunmadı",
+        itemsTransferred: 0
+      });
     }
-
-    // Kullanıcının mevcut bir siparişi var mı kontrol et
+    
+    // Kullanıcının aktif siparişi var mı kontrol et
     let userOrder = await prisma.order.findFirst({
       where: {
         userId: session.user.id,
         status: "pending",
       },
       include: {
-        items: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
       },
     });
-
-    // Kullanıcının siparişi yoksa yeni bir sipariş oluştur
+    
+    // Sipariş yoksa oluştur
     if (!userOrder) {
       userOrder = await prisma.order.create({
         data: {
           userId: session.user.id,
           status: "pending",
-          totalPrice: 0, // Toplam fiyat daha sonra hesaplanacak
+          totalPrice: 0,
         },
         include: {
-          items: true,
+          items: {
+            include: {
+              product: true,
+            },
+          },
         },
       });
     }
-
-    // Misafir sepetindeki her ürün için
-    for (const guestItem of guestCart.items) {
-      // Ürünün stokta olup olmadığını kontrol et
-      const product = await prisma.product.findUnique({
-        where: {
-          id: guestItem.productId,
-          isActive: true,
-        },
-      });
-
-      if (!product || product.stock < guestItem.quantity) {
-        continue; // Stokta yoksa veya yeterli stok yoksa bu ürünü atla
-      }
-
-      // Ürün kullanıcının sepetinde var mı kontrol et
+    
+    // Misafir sepetindeki ürünleri kullanıcı sepetine aktar
+    let itemsTransferred = 0;
+    
+    for (const item of guestCart.items) {
+      // Kullanıcı sepetinde aynı ürün var mı kontrol et
       const existingItem = userOrder.items.find(
-        (item) => item.productId === guestItem.productId
+        (i) => i.productId === item.productId
       );
-
+      
       if (existingItem) {
-        // Ürün zaten sepette, miktarı güncelle
-        const newQuantity = Math.min(existingItem.quantity + guestItem.quantity, product.stock);
-        
+        // Varsa miktarını artır
         await prisma.orderItem.update({
           where: {
             id: existingItem.id,
           },
           data: {
-            quantity: newQuantity,
+            quantity: existingItem.quantity + item.quantity,
+            price: item.price,
           },
         });
       } else {
-        // Ürün sepette değil, yeni bir öğe ekle
+        // Yoksa yeni ekle
         await prisma.orderItem.create({
           data: {
             orderId: userOrder.id,
-            productId: guestItem.productId,
-            quantity: guestItem.quantity,
-            price: guestItem.price,
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
           },
         });
       }
+      
+      itemsTransferred++;
     }
-
+    
     // Toplam fiyatı güncelle
     const updatedItems = await prisma.orderItem.findMany({
       where: {
@@ -119,37 +129,49 @@ export async function POST(request: NextRequest) {
         product: true,
       },
     });
-
-    const newTotalPrice = updatedItems.reduce(
-      (total, item) => total + item.price * item.quantity,
+    
+    const totalPrice = updatedItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
       0
     );
-
+    
     await prisma.order.update({
       where: {
         id: userOrder.id,
       },
       data: {
-        totalPrice: newTotalPrice,
+        totalPrice,
       },
     });
-
-    // Misafir sepetini sil
+    
+    // Misafir sepetini temizle
+    await prisma.guestCartItem.deleteMany({
+      where: {
+        guestCartId: guestCart.id,
+      },
+    });
+    
+    // Misafir sepeti tablosundan silelim
     await prisma.guestCart.delete({
       where: {
-        id: guestCartId,
+        id: guestCart.id,
       },
     });
-
-    // Misafir sepeti cookie'sini temizle
-    const response = NextResponse.json({ success: true, message: "Sepet başarıyla aktarıldı" });
-    response.cookies.delete('guestCartId');
     
-    return response;
+    // Misafir sepeti çerezini silelim
+    cookieStore.delete('guestCartId');
+    
+    return NextResponse.json({
+      success: true,
+      message: `${itemsTransferred} ürün sepetinize aktarıldı`,
+      itemsTransferred,
+      cartId: userOrder.id
+    });
+    
   } catch (error) {
-    console.error("Sepet aktarılırken hata:", error);
+    console.error("Sepet birleştirme hatası:", error);
     return NextResponse.json(
-      { error: "Sepet aktarılırken bir hata oluştu" },
+      { error: "Sepet birleştirme sırasında bir hata oluştu" },
       { status: 500 }
     );
   }

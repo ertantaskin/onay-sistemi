@@ -1,9 +1,8 @@
-import { Suspense } from 'react';
-import { use } from 'react';
+import { Suspense, use } from 'react';
 import TicketDetail from './TicketDetail';
 
-export default function AdminTicketDetailPage({ params }: { params: { id: string } }) {
-  const resolvedParams = use(Promise.resolve(params));
+export default function AdminTicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
 
   return (
     <Suspense fallback={

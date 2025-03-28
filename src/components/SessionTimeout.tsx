@@ -39,8 +39,7 @@ export function SessionTimeout() {
   // Korumalı sayfa kontrolü
   const isProtectedPage = useCallback(() => {
     return pathname?.startsWith('/dashboard') || 
-           pathname?.startsWith('/admin') || 
-           pathname?.startsWith('/store');
+           pathname?.startsWith('/admin');
   }, [pathname]);
 
   useEffect(() => {
