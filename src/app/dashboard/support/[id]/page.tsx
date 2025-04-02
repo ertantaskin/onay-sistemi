@@ -27,7 +27,6 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
         <TicketDetail ticketId={resolvedParams.id} />
       </Suspense>
       
-      <Footer />
     </div>
   );
 } 

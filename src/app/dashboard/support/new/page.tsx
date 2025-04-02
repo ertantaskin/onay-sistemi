@@ -62,7 +62,6 @@ export default function NewTicketCategoryPage() {
             <p className="mt-4">Destek kategorileri yükleniyor...</p>
           </div>
         </div>
-        <Footer />
         <Toaster position="top-center" />
       </div>
     );
@@ -164,8 +163,6 @@ export default function NewTicketCategoryPage() {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 } 

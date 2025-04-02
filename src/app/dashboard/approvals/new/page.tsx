@@ -78,8 +78,6 @@ export default function NewApprovalPage() {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 } 

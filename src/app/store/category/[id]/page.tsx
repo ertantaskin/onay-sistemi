@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2, ShoppingCart, ArrowLeft, Package, AlertCircle, CheckCircle, Clock, Shield } from "lucide-react";
+import { Loader2, ShoppingCart, ArrowLeft, Package, AlertCircle, CheckCircle, Clock, Shield, ChevronDown, Heart, Star, Eye } from "lucide-react";
 import { useTheme } from "@/app/ThemeContext";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -18,6 +18,10 @@ interface Product {
   price: number;
   imageUrl: string | null;
   stock: number;
+  isOnSale: boolean;
+  originalPrice?: number;
+  brand?: string;
+  reviewCount?: number;
 }
 
 interface Category {
@@ -37,6 +41,8 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const { updateCartItemCount } = useCartStore();
+  const [sortOption, setSortOption] = useState("");
+  const [filterOption, setFilterOption] = useState("");
 
   useEffect(() => {
     const fetchCategoryAndProducts = async () => {
@@ -270,100 +276,159 @@ export default function CategoryPage() {
             </div>
           </div>
 
-          {products.length === 0 ? (
-            <div className={`text-center py-16 px-4 rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}>
-              <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-              <p className="text-xl font-medium mb-4">Bu kategoride henüz ürün bulunmamaktadır</p>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Lütfen daha sonra tekrar kontrol ediniz veya diğer kategorilere göz atınız.
-              </p>
-              <Link 
-                href="/store" 
-                className={`inline-flex items-center px-6 py-3 rounded-lg font-medium shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200 ${
-                  theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-              >
-                Diğer Kategorilere Göz At
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {products.map((product) => (
-                <div 
-                  key={product.id} 
-                  className={`rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${
-                    theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
-                  }`}
+          {/* Ürün listesi */}
+          <div className="mt-8">
+            {loading ? (
+              <div className="flex justify-center items-center py-16">
+                <div className="text-center">
+                  <Loader2 className="h-10 w-10 animate-spin text-blue-500 mx-auto mb-4" />
+                  <p className="text-gray-600 dark:text-gray-400">Ürünler yükleniyor...</p>
+                </div>
+              </div>
+            ) : products.length === 0 ? (
+              <div className={`text-center py-16 px-6 rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+                  <Package className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Bu kategoride henüz ürün bulunmamaktadır</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm max-w-md mx-auto">
+                  Ürünler yakında eklenecektir. Lütfen daha sonra tekrar kontrol ediniz.
+                </p>
+                <Link 
+                  href="/store" 
+                  className="mt-6 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  <div className="relative">
-                    {product.imageUrl ? (
-                      <div className="relative h-48 bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800">
-                        <Image
-                          src={product.imageUrl}
-                          alt={product.name}
-                          fill
-                          className="object-contain p-2"
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-48 bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center">
-                        {category.name.toLowerCase().includes('windows') ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-white" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
-                          </svg>
-                        ) : category.name.toLowerCase().includes('office') ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-white" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M23 1.5q.41 0 .7.3.3.29.3.7v19q0 .41-.3.7-.29.3-.7.3H7q-.41 0-.7-.3-.3-.29-.3-.7V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h5V2.5q0-.41.3-.7.29-.3.7-.3zM6 13.28l1.42 2.66h2.14l-1.74-3.48 1.74-3.6H7.46L6 11.38l-.46-2.52H3.4l-.9 3.6L1.6 15.94h2.04zM14.25 22.5v-19h-7.5v5H9v9h-2.5v5z"/>
-                          </svg>
-                        ) : (
-                          <Package className="h-20 w-20 text-white" />
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Stok durumu etiketi */}
-                    {product.stock <= 5 && (
-                      <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        <span>Son {product.stock} ürün!</span>
-                      </div>
-                    )}
+                  Mağazaya Dön
+                </Link>
+              </div>
+            ) : (
+              <>
+                {/* Ürün filtreleme ve sıralama seçenekleri */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 mr-2">{products.length} ürün bulundu</span>
                   </div>
                   
-                  <div className="p-6">
-                    <h2 className="text-xl font-bold mb-2">{product.name}</h2>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">{product.description}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="relative">
+                      <select 
+                        value={sortOption} 
+                        onChange={(e) => setSortOption(e.target.value)}
+                        className={`pl-3 pr-8 py-2 text-sm rounded-lg border ${
+                          theme === 'dark' 
+                            ? 'bg-gray-800 border-gray-700 text-gray-200' 
+                            : 'bg-white border-gray-300 text-gray-700'
+                        } appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      >
+                        <option value="">Sıralama</option>
+                        <option value="price-asc">Fiyat (Düşükten Yükseğe)</option>
+                        <option value="price-desc">Fiyat (Yüksekten Düşüğe)</option>
+                        <option value="name-asc">İsim (A-Z)</option>
+                        <option value="name-desc">İsim (Z-A)</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                      </div>
+                    </div>
                     
-                    <div className="border-t border-gray-100 dark:border-gray-700 pt-4 mt-auto">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                          {product.price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
-                        </span>
-                        <button
-                          onClick={() => handleAddToCart(product.id)}
-                          disabled={product.stock <= 0 || addingToCart === product.id}
-                          className={`flex items-center space-x-1 py-2 px-4 rounded-lg transition-all duration-200 ${
-                            product.stock > 0
-                              ? addingToCart === product.id
-                                ? "bg-blue-700 text-white cursor-wait"
-                                : "bg-blue-600 hover:bg-blue-700 text-white transform hover:-translate-y-1 hover:shadow-md"
-                              : "bg-gray-400 cursor-not-allowed text-gray-200"
-                          }`}
-                        >
-                          {addingToCart === product.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                          ) : (
-                            <ShoppingCart className="h-4 w-4 mr-1" />
-                          )}
-                          <span>{product.stock > 0 ? "Sepete Ekle" : "Stokta Yok"}</span>
-                        </button>
+                    <div className="relative">
+                      <select 
+                        value={filterOption} 
+                        onChange={(e) => setFilterOption(e.target.value)}
+                        className={`pl-3 pr-8 py-2 text-sm rounded-lg border ${
+                          theme === 'dark' 
+                            ? 'bg-gray-800 border-gray-700 text-gray-200' 
+                            : 'bg-white border-gray-300 text-gray-700'
+                        } appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      >
+                        <option value="">Filtrele</option>
+                        <option value="in-stock">Stokta Var</option>
+                        <option value="on-sale">İndirimde</option>
+                        <option value="new">Yeni Ürünler</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <ChevronDown className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+                
+                {/* Ürün grid görünümü - Mobil uyumlu */}
+                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+                  {products.map((product) => (
+                    <div 
+                      key={product.id} 
+                      className={`group relative rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${
+                        theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                      }`}
+                    >
+                      <div className="relative h-36 xs:h-40 md:h-48 overflow-hidden bg-gray-100 dark:bg-gray-900">
+                        {product.isOnSale && (
+                          <div className="absolute top-2 left-2 z-10">
+                            <div className="bg-red-600 text-white text-[10px] xs:text-xs px-1.5 xs:px-2 py-0.5 xs:py-1 rounded-full font-medium">İndirimde</div>
+                          </div>
+                        )}
+                        <div className="absolute top-2 right-2 z-10">
+                          <button className="h-6 w-6 xs:h-7 xs:w-7 sm:h-8 sm:w-8 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 flex items-center justify-center">
+                            <Heart className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 text-gray-400 hover:text-red-500" />
+                          </button>
+                        </div>
+                        <Image
+                          src={product.imageUrl || "/images/product-placeholder.png"}
+                          alt={product.name}
+                          className="object-contain w-full h-full p-4 transition-transform duration-300 group-hover:scale-105"
+                          width={300}
+                          height={300}
+                          onError={(e) => {
+                            e.currentTarget.src = "/images/product-placeholder.png";
+                          }}
+                        />
+                      </div>
+                      <div className="p-2 xs:p-3 sm:p-4">
+                        <div className="mb-1 xs:mb-2 flex justify-between items-start">
+                          <div>
+                            <span className="text-[10px] xs:text-xs font-medium text-blue-600 dark:text-blue-400 mb-0.5 block">{product.brand || "Microsoft"}</span>
+                            <h3 className="font-medium text-xs sm:text-sm">{product.name}</h3>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            {product.originalPrice && product.originalPrice > product.price && (
+                              <span className="text-[10px] xs:text-xs line-through text-gray-500">₺{product.originalPrice}</span>
+                            )}
+                            <span className="text-sm xs:text-base sm:text-lg font-bold text-blue-600 dark:text-blue-400">₺{product.price}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center text-amber-500 mb-1 xs:mb-2">
+                          <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
+                          <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
+                          <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
+                          <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
+                          <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
+                          <span className="text-[10px] xs:text-xs text-gray-500 dark:text-gray-400 ml-1">({product.reviewCount || "0"})</span>
+                        </div>
+                        <p className="text-[10px] xs:text-xs text-gray-600 dark:text-gray-400 mb-2 xs:mb-3 sm:mb-4 line-clamp-2">
+                          {product.description || "Orijinal lisans, e-posta ile anında teslimat."}
+                        </p>
+                        <div className="flex space-x-1 xs:space-x-2">
+                          <button 
+                            onClick={() => handleAddToCart(product.id)}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 xs:py-1.5 sm:py-2 px-2 xs:px-3 sm:px-4 rounded-md flex items-center justify-center transition-colors text-[10px] xs:text-xs sm:text-sm"
+                          >
+                            <ShoppingCart className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 mr-1 xs:mr-1.5 sm:mr-2" />
+                            Sepete Ekle
+                          </button>
+                          <Link href={`/store/product/${product.id}`}>
+                            <button className="flex-shrink-0 border rounded-md p-1 xs:p-1.5 sm:p-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                              <Eye className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 text-gray-700 dark:text-gray-300" />
+                            </button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
       <Footer />

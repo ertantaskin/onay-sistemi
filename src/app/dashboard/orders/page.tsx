@@ -188,7 +188,6 @@ export default function OrdersPage() {
             <p className="mt-4">Siparişleriniz yükleniyor...</p>
           </div>
         </div>
-        <Footer />
         <Toaster position="top-center" />
       </div>
     );
@@ -411,8 +410,6 @@ export default function OrdersPage() {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 } 

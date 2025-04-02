@@ -274,8 +274,6 @@ export default function SupportPage() {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 } 

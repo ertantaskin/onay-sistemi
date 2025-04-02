@@ -374,8 +374,6 @@ export default function AddCreditPage() {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 } 

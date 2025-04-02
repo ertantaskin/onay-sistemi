@@ -4,10 +4,25 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
-import { CurrencyDollarIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { useTheme } from '@/app/ThemeContext';
 import { useCreditStore } from '@/store/creditStore';
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { Toaster, toast } from "react-hot-toast";
+import { 
+  Wallet, 
+  ArrowRight, 
+  History, 
+  ArrowLeft, 
+  Coins, 
+  CheckCircle, 
+  XCircle, 
+  Clock,
+  RefreshCw,
+  CreditCard,
+  Tag
+} from "lucide-react";
 
 interface CreditTransaction {
   id: string;
@@ -20,7 +35,7 @@ interface CreditTransaction {
 }
 
 export default function CreditHistoryPage() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const { theme } = useTheme();
   const { credits } = useCreditStore();
@@ -30,8 +45,15 @@ export default function CreditHistoryPage() {
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetchTransactions();
-  }, [page]);
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (sessionStatus === 'authenticated') {
+      fetchTransactions();
+    }
+  }, [sessionStatus, page]);
 
   const fetchTransactions = async () => {
     try {
@@ -73,16 +95,53 @@ export default function CreditHistoryPage() {
     }
   };
 
+  const getTransactionTypeIcon = (type: string) => {
+    switch (type) {
+      case 'purchase':
+      case 'PURCHASE': 
+        return <CreditCard className="h-4 w-4 mr-1.5" />;
+      case 'coupon': 
+        return <Tag className="h-4 w-4 mr-1.5" />;
+      case 'refund': 
+        return <RefreshCw className="h-4 w-4 mr-1.5" />;
+      case 'usage': 
+        return <Coins className="h-4 w-4 mr-1.5" />;
+      default: 
+        return <Coins className="h-4 w-4 mr-1.5" />;
+    }
+  }; 
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
+        return theme === 'dark' 
+          ? 'bg-green-900/30 text-green-400' 
+          : 'bg-green-100 text-green-800';
       case 'pending':
-        return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200';
+        return theme === 'dark' 
+          ? 'bg-yellow-900/30 text-yellow-400' 
+          : 'bg-yellow-100 text-yellow-800';
       case 'failed':
-        return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200';
+        return theme === 'dark' 
+          ? 'bg-red-900/30 text-red-400' 
+          : 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200';
+        return theme === 'dark' 
+          ? 'bg-gray-900/30 text-gray-400' 
+          : 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 mr-1.5" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 mr-1.5" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4 mr-1.5" />;
+      default:
+        return <Clock className="h-4 w-4 mr-1.5" />;
     }
   };
 
@@ -95,127 +154,201 @@ export default function CreditHistoryPage() {
     }
   };
 
-  if (loading) {
+  if (loading && sessionStatus !== 'loading') {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        <Header />
+        <div className="pt-20 flex justify-center items-center min-h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4">Kredi geçmişi yükleniyor...</p>
+          </div>
+        </div>
+        <Footer />
+        <Toaster position="top-center" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Kredi Bilgisi */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Kredi Bilgisi</h2>
-            <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-full">
-              <CurrencyDollarIcon className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <Header />
+      <Toaster position="top-center" />
+      
+      <div className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {/* Sayfa Başlığı */}
+        <div className="mb-8">
+          <div className="flex items-center space-x-4">
+            <div className={`p-3 rounded-full ${
+              theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+            } shadow-lg`}>
+              <History className="h-12 w-12 text-blue-500" />
             </div>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-gray-600 dark:text-gray-300 mb-1">Mevcut Krediniz</p>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                {credits} Kredi
-              </div>
+              <h1 className="text-3xl font-bold">Kredi Geçmişi</h1>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                Tüm kredi işlemlerinizi görüntüleyin
+              </p>
             </div>
-            <Link
-              href="/dashboard/credits/add"
-              className="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-            >
-              Kredi Yükle
-              <ArrowRightIcon className="ml-2 h-4 w-4" />
-            </Link>
           </div>
         </div>
 
-        {/* Kredi Geçmişi */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mt-8">
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-              Kredi Geçmişi
-            </h1>
+        {/* Geri Dön Butonu */}
+        <div className="mb-6">
+          <button
+            onClick={() => router.push('/dashboard/credits')}
+            className={`flex items-center text-sm ${
+              theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+            } transition-colors`}
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Kredi İşlemlerine Geri Dön
+          </button>
+        </div>
 
-            {transactions.length === 0 ? (
-              <p className="text-center py-8 text-gray-600 dark:text-gray-400">
-                Henüz işlem geçmişiniz bulunmuyor.
-              </p>
-            ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Sol Kolon - Dashboard Sidebar */}
+          <div className="lg:col-span-3">
+            <DashboardSidebar />
+          </div>
+
+          {/* Sağ Kolon - Kredi Geçmişi */}
+          <div className="lg:col-span-9 space-y-6">
+            {/* Kredi Bilgisi */}
+            <div className={`rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg overflow-hidden`}>
+              <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Wallet className="h-5 w-5 text-yellow-500" />
+                    <h2 className="text-lg font-semibold">Kredi Bilgisi</h2>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} mb-1`}>Mevcut Krediniz</p>
+                    <div className="text-3xl font-bold">
+                      {credits} <span className="text-yellow-500">Kredi</span>
+                    </div>
+                  </div>
+                  <Link
+                    href="/dashboard/credits/add"
+                    className={`inline-flex items-center px-4 py-2 rounded-lg ${
+                      theme === 'dark' 
+                        ? 'bg-yellow-600 hover:bg-yellow-700' 
+                        : 'bg-yellow-500 hover:bg-yellow-600'
+                    } text-white font-medium transition-colors duration-200`}
+                  >
+                    Kredi Yükle
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Kredi Geçmişi Tablosu */}
+            <div className={`rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg overflow-hidden`}>
+              <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className="flex items-center space-x-2">
+                  <History className="h-5 w-5 text-blue-500" />
+                  <h2 className="text-lg font-semibold">İşlem Geçmişi</h2>
+                </div>
+              </div>
+              
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-900">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Tarih
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        İşlem
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Miktar
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Durum
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Açıklama
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {transactions.map((transaction) => (
-                      <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {formatDate(transaction.createdAt)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {getTransactionTypeText(transaction.type)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <span className={transaction.type === 'usage' || transaction.type === 'PURCHASE' || transaction.amount < 0 
-                            ? 'text-red-600 dark:text-red-400' 
-                            : 'text-green-600 dark:text-green-400'}>
-                            {transaction.amount < 0 ? '' : '+'}{transaction.amount} Kredi
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(transaction.status)}`}>
-                            {getStatusText(transaction.status)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {transaction.description}
-                        </td>
+                {transactions.length === 0 ? (
+                  <div className={`p-8 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <Coins className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                    <p>Henüz işlem geçmişiniz bulunmuyor.</p>
+                  </div>
+                ) : (
+                  <table className={`min-w-full divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                    <thead className={theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'}>
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                          Tarih
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                          İşlem Türü
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                          Miktar
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                          Durum
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                          Açıklama
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                      {transactions.map((transaction) => (
+                        <tr key={transaction.id} className={theme === 'dark' ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {formatDate(transaction.createdAt)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex items-center">
+                              {getTransactionTypeIcon(transaction.type)}
+                              {getTransactionTypeText(transaction.type)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <span className={transaction.type === 'usage' || transaction.type === 'PURCHASE' || transaction.amount < 0 
+                              ? theme === 'dark' ? 'text-red-400' : 'text-red-600'
+                              : theme === 'dark' ? 'text-green-400' : 'text-green-600'}>
+                              {transaction.amount < 0 ? '' : '+'}{transaction.amount} Kredi
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(transaction.status)}`}>
+                              {getStatusIcon(transaction.status)}
+                              {getStatusText(transaction.status)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {transaction.description}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
-            )}
 
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-6 space-x-2">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Önceki
-                </button>
-                <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
-                  Sayfa {page} / {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Sonraki
-                </button>
-              </div>
-            )}
+              {totalPages > 1 && (
+                <div className="flex justify-center p-6 space-x-2">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      theme === 'dark'
+                        ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400'
+                    } transition-colors disabled:cursor-not-allowed`}
+                  >
+                    Önceki
+                  </button>
+                  <span className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Sayfa {page} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      theme === 'dark'
+                        ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400'
+                    } transition-colors disabled:cursor-not-allowed`}
+                  >
+                    Sonraki
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

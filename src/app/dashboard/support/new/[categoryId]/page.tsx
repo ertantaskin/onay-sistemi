@@ -27,7 +27,6 @@ export default function NewTicketPage({ params }: { params: Promise<{ categoryId
         <TicketForm categoryId={resolvedParams.categoryId} />
       </Suspense>
       
-      <Footer />
     </div>
   );
 } 

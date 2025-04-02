@@ -353,8 +353,6 @@ export default function ApprovalHistoryPage() {
           </div>
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 } 
