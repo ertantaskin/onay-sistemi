@@ -67,10 +67,10 @@ export default function DashboardPage() {
   }, [status, router]);
 
   const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      
-      // Kullanıcı bilgilerini getir
+      try {
+        setLoading(true);
+        
+        // Kullanıcı bilgilerini getir
       let userCredits = 0;
       try {
         const userResponse = await fetch('/api/users/me');
@@ -140,11 +140,11 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Dashboard verisi yüklenirken hata:', error);
       toast.error('Veriler yüklenirken bir hata oluştu');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+      } finally {
+        setLoading(false);
+      }
+    };
+    
   if (loading) {
     return (
       <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -295,8 +295,8 @@ export default function DashboardPage() {
                       : 'from-sky-400 to-sky-500 text-white shadow-md'
                   } transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
                     <BellRing className="h-6 w-6" />
-                  </div>
-                  
+            </div>
+
                   <h3 className="text-lg font-bold mb-1 group-hover:translate-x-1 transition-transform duration-300">
                     <span className={`bg-gradient-to-r ${
                       theme === 'dark'
@@ -417,7 +417,7 @@ export default function DashboardPage() {
               </div>
 
               <div className={`rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg p-6`}>
-                <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4">
                   <div className={`p-2 rounded-lg ${
                     theme === 'dark' ? 'bg-purple-500/20' : 'bg-purple-100'
                   }`}>
@@ -503,7 +503,7 @@ export default function DashboardPage() {
 
           {/* Sağ Kolon - Bildirimler ve Hızlı İşlemler */}
           <div className="lg:col-span-3 space-y-8">
-            {/* Kredi Bilgisi */}
+          {/* Kredi Bilgisi */}
             <div className={`rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg overflow-hidden`}>
               <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                 <div className="flex justify-between items-center">
@@ -525,7 +525,7 @@ export default function DashboardPage() {
               </div>
               
               <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4">
                   <div>
                     <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       Mevcut Krediniz
@@ -613,7 +613,7 @@ export default function DashboardPage() {
                     }`}>
                       <XCircle className="h-5 w-5 text-red-500" />
                     </div>
-                    <div>
+              <div>
                       <p className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         Sipariş başarısız
                       </p>

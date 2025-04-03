@@ -79,6 +79,7 @@ export default function AdminMenu() {
       items: [
         { href: '/admin/store/products', label: 'Ürünler' },
         { href: '/admin/store/categories', label: 'Kategoriler' },
+        { href: '/admin/store/featured-products', label: 'Öne Çıkan Ürünler' },
         { href: '/admin/store/orders', label: 'Siparişler' }
       ]
     },

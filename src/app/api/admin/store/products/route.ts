@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, description, price, stock, imageUrl, categoryId, isActive } = await request.json();
+    const { name, description, price, stock, imageUrl, categoryId, isActive, isFeatured } = await request.json();
 
     if (!name || !description || price === undefined || stock === undefined || !categoryId) {
       return NextResponse.json(
@@ -74,16 +74,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Temel veri nesnesini oluştur
+    const productData: any = {
+      name,
+      description,
+      price: Number(price),
+      stock: Number(stock),
+      imageUrl: imageUrl || null,
+      categoryId,
+      isActive: isActive !== undefined ? isActive : true,
+    };
+
+    // isFeatured varsa ekleyelim
+    if (isFeatured !== undefined) {
+      productData.isFeatured = isFeatured;
+    }
+
     const product = await prisma.product.create({
-      data: {
-        name,
-        description,
-        price: Number(price),
-        stock: Number(stock),
-        imageUrl: imageUrl || null,
-        categoryId,
-        isActive: isActive !== undefined ? isActive : true,
-      },
+      data: productData,
     });
 
     return NextResponse.json(product);

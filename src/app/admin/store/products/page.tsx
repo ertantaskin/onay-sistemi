@@ -20,6 +20,7 @@ interface Product {
   imageUrl: string | null;
   categoryId: string;
   isActive: boolean;
+  isFeatured?: boolean;
   createdAt: string;
 }
 
@@ -44,7 +45,8 @@ export default function ProductsPage() {
     stock: 0,
     imageUrl: "",
     categoryId: "",
-    isActive: true
+    isActive: true,
+    isFeatured: false
   });
   const [isEditing, setIsEditing] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -93,7 +95,8 @@ export default function ProductsPage() {
       stock: product.stock,
       imageUrl: product.imageUrl || "",
       categoryId: product.categoryId,
-      isActive: product.isActive
+      isActive: product.isActive,
+      isFeatured: product.isFeatured || false
     });
     setImagePreview(product.imageUrl);
     setIsEditing(true);
@@ -205,7 +208,8 @@ export default function ProductsPage() {
       stock: 0,
       imageUrl: "",
       categoryId: "",
-      isActive: true
+      isActive: true,
+      isFeatured: false
     });
     setImageFile(null);
     setImagePreview(null);
@@ -318,15 +322,32 @@ export default function ProductsPage() {
                   </select>
                 </div>
                 <div className="mb-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.isActive}
-                      onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Aktif</span>
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="isActive"
+                        checked={formData.isActive}
+                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800"
+                      />
+                      <label htmlFor="isActive" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Aktif
+                      </label>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="isFeatured"
+                        checked={formData.isFeatured}
+                        onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800"
+                      />
+                      <label htmlFor="isFeatured" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        En Çok Tercih Edilenler Kısmına Ekle
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div>
@@ -434,6 +455,9 @@ export default function ProductsPage() {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       Durum
                     </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Öne Çıkan
+                    </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                       İşlemler
                     </th>
@@ -489,6 +513,15 @@ export default function ProductsPage() {
                               : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                           }`}>
                             {product.isActive ? "Aktif" : "Pasif"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            product.isFeatured 
+                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' 
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+                          }`}>
+                            {product.isFeatured ? "Öne Çıkan" : "Normal"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

@@ -67,7 +67,7 @@ export async function PUT(
     }
 
     const productId = params.id;
-    const { name, description, price, stock, imageUrl, categoryId, isActive } = await request.json();
+    const { name, description, price, stock, imageUrl, categoryId, isActive, isFeatured } = await request.json();
 
     if (!name || !description || price === undefined || stock === undefined || !categoryId) {
       return NextResponse.json(
@@ -104,20 +104,28 @@ export async function PUT(
       );
     }
 
+    // Temel güncellenecek veri nesnesini oluştur
+    const updateData: any = {
+      name,
+      description,
+      price: Number(price),
+      stock: Number(stock),
+      imageUrl: imageUrl || null,
+      categoryId,
+      isActive: isActive !== undefined ? isActive : true,
+    };
+
+    // isFeatured varsa ekleyelim
+    if (isFeatured !== undefined) {
+      updateData.isFeatured = isFeatured;
+    }
+
     // Ürünü güncelle
     const updatedProduct = await prisma.product.update({
       where: {
         id: productId,
       },
-      data: {
-        name,
-        description,
-        price: Number(price),
-        stock: Number(stock),
-        imageUrl: imageUrl || null,
-        categoryId,
-        isActive: isActive !== undefined ? isActive : true,
-      },
+      data: updateData,
     });
 
     return NextResponse.json(updatedProduct);

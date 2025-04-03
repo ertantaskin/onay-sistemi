@@ -306,7 +306,7 @@ export default function ProfilePage() {
                 <div className="flex justify-between items-center">
                   <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} flex items-center`}>
                     <UserCircle className="h-5 w-5 mr-2 text-blue-500" />
-                    Profil Bilgileri
+          Profil Bilgileri
                   </h2>
                   {!isEditingProfile && (
                     <button
@@ -328,50 +328,50 @@ export default function ProfilePage() {
                 {isEditingProfile ? (
                   <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
+          <div>
                         <label className={`block mb-2 text-sm font-medium ${
                           theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                         }`}>
-                          Ad Soyad
-                        </label>
-                        <input
-                          type="text"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              Ad Soyad
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                           className={`w-full p-3 rounded-md ${
-                            theme === 'dark'
+                theme === 'dark'
                               ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50' 
                               : 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30'
                           } border transition-all duration-200`}
                           placeholder="Adınız Soyadınız"
-                          required
-                        />
-                      </div>
+              required
+            />
+          </div>
 
-                      <div>
+          <div>
                         <label className={`block mb-2 text-sm font-medium ${
                           theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                         }`}>
                           E-posta Adresi
-                        </label>
-                        <input
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           className={`w-full p-3 rounded-md ${
-                            theme === 'dark'
+                theme === 'dark'
                               ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50' 
                               : 'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30'
                           } border transition-all duration-200`}
                           placeholder="ornek@mail.com"
-                          required
-                        />
+              required
+            />
                       </div>
-                    </div>
+          </div>
 
                     <div className="flex justify-end space-x-3 pt-2">
-                      <button
-                        type="button"
+            <button
+              type="button"
                         onClick={() => {
                           setIsEditingProfile(false);
                           if (session?.user) {
@@ -382,16 +382,16 @@ export default function ProfilePage() {
                           }
                         }}
                         className={`px-4 py-2 rounded-md ${
-                          theme === 'dark'
+                theme === 'dark'
                             ? 'bg-gray-700 hover:bg-gray-600 text-white' 
                             : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                         } text-sm font-medium transition-colors duration-200`}
                         disabled={loadingProfile}
                       >
                         İptal
-                      </button>
-                      <button
-                        type="submit"
+            </button>
+            <button
+              type="submit"
                         className={`px-4 py-2 rounded-md ${
                           loadingProfile 
                             ? 'bg-gray-400 cursor-not-allowed' 
@@ -577,7 +577,7 @@ export default function ProfilePage() {
                             ? 'bg-gray-700 hover:bg-gray-600 text-white' 
                             : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                         } text-sm font-medium transition-colors duration-200`}
-                        disabled={loading}
+              disabled={loading}
                       >
                         İptal
                       </button>
@@ -585,15 +585,15 @@ export default function ProfilePage() {
                         type="button"
                         onClick={handleSaveBillingDetails}
                         className={`px-4 py-2 rounded-md ${
-                          loading
+                loading
                             ? 'bg-gray-400 cursor-not-allowed' 
                             : theme === 'dark' 
                               ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                               : 'bg-blue-600 hover:bg-blue-700 text-white'
                         } text-sm font-medium transition-colors duration-200 flex items-center`}
                         disabled={loading}
-                      >
-                        {loading ? (
+            >
+              {loading ? (
                           <>
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             Kaydediliyor...
@@ -827,10 +827,10 @@ export default function ProfilePage() {
                             <Save className="h-4 w-4 mr-1.5" />
                             Şifreyi Değiştir
                           </>
-                        )}
-                      </button>
-                    </div>
-                  </form>
+              )}
+            </button>
+          </div>
+        </form>
                 </div>
               </div>
             )}

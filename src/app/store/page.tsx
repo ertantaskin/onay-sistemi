@@ -9,6 +9,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
 import { usePageContent } from "@/hooks/usePageContent";
+import { useCartStore } from '@/store/cartStore';
 
 interface ProductCategory {
   id: string;
@@ -18,10 +19,13 @@ interface ProductCategory {
 
 export default function StorePage() {
   const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { theme } = useTheme();
   const { pageContent, isLoading: pageLoading } = usePageContent("store");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
+  const { updateCartItemCount } = useCartStore();
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -43,7 +47,21 @@ export default function StorePage() {
       }
     };
 
+    const fetchFeaturedProducts = async () => {
+      try {
+        const response = await fetch("/api/store/featured-products");
+        if (!response.ok) {
+          throw new Error("Öne çıkan ürünler yüklenirken bir hata oluştu");
+        }
+        const data = await response.json();
+        setFeaturedProducts(data);
+      } catch (error) {
+        console.error("Öne çıkan ürünler yüklenirken hata:", error);
+      }
+    };
+
     fetchCategories();
+    fetchFeaturedProducts();
   }, []);
 
   // Sayfa başlığı ve açıklaması için varsayılan değerler
@@ -90,6 +108,63 @@ export default function StorePage() {
   const products = pageContent?.content?.products || [];
   // Sayfa kategorileri için API'den gelen veriyi kullanıyoruz
   const categoriesFromApi = categories;
+
+  const handleAddToCart = async (productId: string) => {
+    setAddingToCart(productId);
+    try {
+      const response = await fetch("/api/store/cart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId,
+          quantity: 1,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        const errorMessage = data.error || "Ürün sepete eklenirken bir hata oluştu";
+        throw new Error(errorMessage);
+      }
+
+      // Sepet sayısını güncelle
+      updateCartItemCount();
+
+      // Başarılı ekleme sonrası kullanıcıya bildirim göster
+      const notification = document.createElement('div');
+      notification.className = `fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-up`;
+      notification.textContent = "✓ Ürün sepete eklendi!";
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.classList.add('animate-fade-out');
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+      
+    } catch (error) {
+      console.error("Sepete eklerken hata:", error);
+      
+      // Hata bildirimini göster
+      const errorNotification = document.createElement('div');
+      errorNotification.className = `fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in-up`;
+      errorNotification.textContent = `❌ ${error instanceof Error ? error.message : "Ürün sepete eklenirken bir hata oluştu"}`;
+      document.body.appendChild(errorNotification);
+      
+      setTimeout(() => {
+        errorNotification.classList.add('animate-fade-out');
+        setTimeout(() => {
+          document.body.removeChild(errorNotification);
+        }, 300);
+      }, 3000);
+    } finally {
+      setAddingToCart(null);
+    }
+  };
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -349,116 +424,98 @@ export default function StorePage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-              {/* Windows Kategorisi */}
-              <Link href="/store/category/windows" className="group">
-                <div className={`h-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${
-                    theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
-                  }`}>
-                  <div className="relative h-24 bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-pattern-dots opacity-20"></div>
+              {categories.length > 0 ? (
+                categories.map((category) => {
+                  // Kategori adına göre gradient ve icon belirleme
+                  const getGradient = (name: string) => {
+                    const categoryName = name.toLowerCase();
+                    if (categoryName.includes('windows')) return 'from-blue-500 to-blue-700';
+                    if (categoryName.includes('office')) return 'from-orange-500 to-red-500';
+                    if (categoryName.includes('antivirus') || categoryName.includes('güvenlik')) return 'from-green-500 to-green-700';
+                    if (categoryName.includes('epin') || categoryName.includes('gift')) return 'from-purple-500 to-purple-700';
+                    if (categoryName.includes('server') || categoryName.includes('sunucu')) return 'from-gray-500 to-gray-700';
+                    if (categoryName.includes('visual') || categoryName.includes('studio')) return 'from-indigo-500 to-indigo-700';
+                    return 'from-blue-500 to-blue-600'; // Varsayılan renk
+                  };
+
+                  const getIcon = (name: string) => {
+                    const categoryName = name.toLowerCase();
+                    if (categoryName.includes('windows')) {
+                      return (
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
                           </svg>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Windows</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">İşletim sistemleri</p>
-                  </div>
-                </div>
-              </Link>
-
-              {/* Office Kategorisi */}
-              <Link href="/store/category/office" className="group">
-                <div className={`h-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${
-                  theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
-                }`}>
-                  <div className="relative h-24 bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-pattern-dots opacity-20"></div>
+                      );
+                    }
+                    if (categoryName.includes('office')) {
+                      return (
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M23 1.5q.41 0 .7.3.3.29.3.7v19q0 .41-.3.7-.29.3-.7.3H7q-.41 0-.7-.3-.3-.29-.3-.7V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h5V2.5q0-.41.3-.7.29-.3.7-.3zM6 13.28l1.42 2.66h2.14l-1.74-3.48 1.74-3.6H7.46L6 11.38l-.46-2.52H3.4l-.9 3.6L1.6 15.94h2.04zM14.25 22.5v-19h-7.5v5H9v9h-2.5v5z"/>
                           </svg>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">Office</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Ofis uygulamaları</p>
-                  </div>
-                </div>
-              </Link>
-
-              {/* Antivirüs Kategorisi */}
-              <Link href="/store/category/antivirus" className="group">
-                <div className={`h-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${
-                  theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
-                }`}>
-                  <div className="relative h-24 bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-pattern-dots opacity-20"></div>
-                    <Shield className="h-12 w-12 text-white" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">Antivirüs</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Güvenlik yazılımları</p>
-                  </div>
-                </div>
-              </Link>
-
-              {/* ePin Kategorisi */}
-              <Link href="/store/category/epin" className="group">
-                <div className={`h-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${
-                  theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
-                }`}>
-                  <div className="relative h-24 bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-pattern-dots opacity-20"></div>
-                    <CreditCard className="h-12 w-12 text-white" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">ePin</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Oyun ve hediye kartları</p>
-                  </div>
-                      </div>
-              </Link>
-
-              {/* Server Kategorisi */}
-              <Link href="/store/category/server" className="group">
-                <div className={`h-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${
-                  theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
-                }`}>
-                  <div className="relative h-24 bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-pattern-dots opacity-20"></div>
+                      );
+                    }
+                    if (categoryName.includes('antivirus') || categoryName.includes('güvenlik')) {
+                      return <Shield className="h-12 w-12 text-white" />;
+                    }
+                    if (categoryName.includes('epin') || categoryName.includes('gift')) {
+                      return <CreditCard className="h-12 w-12 text-white" />;
+                    }
+                    if (categoryName.includes('server') || categoryName.includes('sunucu')) {
+                      return (
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
                       <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
                       <line x1="6" y1="6" x2="6.01" y2="6"></line>
                       <line x1="6" y1="18" x2="6.01" y2="18"></line>
                           </svg>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors">Server</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Sunucu yazılımları</p>
-                      </div>
-                </div>
-              </Link>
+                      );
+                    }
+                    if (categoryName.includes('visual') || categoryName.includes('studio')) {
+                      return (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M17.583 1.424l-5.657 17.666-9.278-15.607-1.355 1.472 9.356 15.748 7.044-21.698 2.307-.347v21.349l-2.307-.347-7.05-21.662-9.35 15.712-1.35-1.478 9.272-15.572 5.662 17.598 5.428-.816v-16.174z"/>
+                        </svg>
+                      );
+                    }
+                    // Varsayılan icon
+                    return <Package className="h-12 w-12 text-white" />;
+                  };
 
-              {/* Visual Studio Kategorisi */}
-              <Link href="/store/category/visual-studio" className="group">
+                  // URL-safe slug oluştur
+                  const categorySlug = category.id; 
+
+                  return (
+                    <Link href={`/store/category/${categorySlug}`} className="group" key={category.id}>
                 <div className={`h-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${
                   theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
                 }`}>
-                  <div className="relative h-24 bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center overflow-hidden">
+                        <div className={`relative h-24 bg-gradient-to-br ${getGradient(category.name)} flex items-center justify-center overflow-hidden`}>
                     <div className="absolute inset-0 bg-pattern-dots opacity-20"></div>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M17.583 1.424l-5.657 17.666-9.278-15.607-1.355 1.472 9.356 15.748 7.044-21.698 2.307-.347v21.349l-2.307-.347-7.05-21.662-9.35 15.712-1.35-1.478 9.272-15.572 5.662 17.598 5.428-.816v-16.174z"/>
-                    </svg>
+                          {getIcon(category.name)}
                   </div>
                   <div className="p-4">
-                    <h3 className="text-sm font-semibold group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Visual Studio</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Geliştirici araçları</p>
+                          <h3 className="text-sm font-semibold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{category.name}</h3>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{category.description || 'Microsoft Ürünleri'}</p>
                     </div>
                   </div>
                 </Link>
+                  );
+                })
+              ) : (
+                <div className={`text-center py-16 px-6 rounded-xl col-span-6 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+                    <Package className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">Henüz kategori bulunmamaktadır</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm max-w-md mx-auto">
+                    Kategoriler yakında eklenecektir. Lütfen daha sonra tekrar kontrol ediniz.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
-          {!loading && categoriesFromApi.length === 0 && (
+          {!loading && categories.length === 0 && (
             <div className={`text-center py-16 px-6 rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
               <div className="bg-gray-100 dark:bg-gray-700 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
                 <Package className="h-8 w-8 text-gray-500 dark:text-gray-400" />
@@ -508,8 +565,9 @@ export default function StorePage() {
             <>
               {/* Mobil uyumlu responsive grid, xs: 2, sm: 2, lg: 3, xl: 4 kolonlu grid */}
               <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-                {/* Windows 11 Pro */}
-                <div className={`group relative rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${
+                {featuredProducts.length > 0 ? (
+                  featuredProducts.map((product) => (
+                    <div key={product.id} className={`group relative rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${
                   theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
                 }`}>
                   <div className="relative h-32 xs:h-36 sm:h-48 overflow-hidden bg-gray-100 dark:bg-gray-900">
@@ -518,12 +576,13 @@ export default function StorePage() {
                     </div>
                     <div className="absolute top-1 right-1 xs:top-2 xs:right-2 sm:top-3 sm:right-3 z-10">
                       <button className="h-6 w-6 xs:h-7 xs:w-7 sm:h-8 sm:w-8 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 flex items-center justify-center">
-                        <Heart className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 text-red-500" />
+                            <Heart className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 text-gray-400 hover:text-red-500" />
                       </button>
                     </div>
+                        {product.imageUrl ? (
                     <Image
-                      src="/images/products/windows11.webp"
-                      alt="Windows 11 Pro"
+                            src={product.imageUrl}
+                            alt={product.name}
                       className="object-contain w-full h-full p-4 transition-transform duration-300 group-hover:scale-105"
                       width={300}
                       height={300}
@@ -531,16 +590,24 @@ export default function StorePage() {
                         e.currentTarget.src = "/images/product-placeholder.png";
                       }}
                     />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <div className="p-6 bg-gray-200 dark:bg-gray-700 rounded-full">
+                              <Package className="h-10 w-10 text-gray-500 dark:text-gray-400" />
+                  </div>
+                      </div>
+                        )}
                   </div>
                   <div className="p-2 xs:p-3 sm:p-5">
                     <div className="mb-1 xs:mb-2 flex justify-between items-start">
                       <div>
-                        <span className="text-[10px] xs:text-xs font-medium text-blue-600 dark:text-blue-400 mb-0.5 block">Microsoft</span>
-                        <h3 className="font-medium text-xs sm:text-sm">Windows 11 Pro</h3>
+                            <span className="text-[10px] xs:text-xs font-medium text-blue-600 dark:text-blue-400 mb-0.5 block">
+                              {product.category?.name || "Microsoft"}
+                            </span>
+                            <h3 className="font-medium text-xs sm:text-sm">{product.name}</h3>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-[10px] xs:text-xs line-through text-gray-500">₺1299</span>
-                        <span className="text-sm xs:text-base sm:text-lg font-bold text-blue-600 dark:text-blue-400">₺499</span>
+                            <span className="text-sm xs:text-base sm:text-lg font-bold text-blue-600 dark:text-blue-400">{product.price.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}</span>
                       </div>
                     </div>
                     <div className="flex items-center text-amber-500 mb-1 xs:mb-2">
@@ -548,197 +615,49 @@ export default function StorePage() {
                       <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
                       <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
                       <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <span className="text-[10px] xs:text-xs text-gray-500 dark:text-gray-400 ml-1">(120+)</span>
+                          <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
                     </div>
                     <p className="text-[10px] xs:text-xs text-gray-600 dark:text-gray-400 mb-2 xs:mb-3 sm:mb-4 line-clamp-2">
-                      Orijinal lisans, ömür boyu kullanım. E-posta ile anında teslimat.
+                          {product.description.length > 80 
+                            ? `${product.description.substring(0, 80)}...` 
+                            : product.description}
                     </p>
                     <div className="flex space-x-1 xs:space-x-2">
-                      <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 xs:py-1.5 sm:py-2 px-2 xs:px-3 sm:px-4 rounded-md flex items-center justify-center transition-colors text-[10px] xs:text-xs sm:text-sm">
-                        <ShoppingCart className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 mr-1 xs:mr-1.5 sm:mr-2" />
-                        Sepete Ekle
+                      <button 
+                        onClick={() => handleAddToCart(product.id)}
+                        disabled={addingToCart === product.id}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 xs:py-1.5 sm:py-2 px-2 xs:px-3 sm:px-4 rounded-md flex items-center justify-center transition-colors text-[10px] xs:text-xs sm:text-sm"
+                      >
+                        {addingToCart === product.id ? (
+                          <Loader2 className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 mr-1 xs:mr-1.5 sm:mr-2 animate-spin" />
+                        ) : (
+                          <ShoppingCart className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 mr-1 xs:mr-1.5 sm:mr-2" />
+                        )}
+                        {addingToCart === product.id ? "Ekleniyor..." : "Sepete Ekle"}
                       </button>
-                      <button className="flex-shrink-0 border rounded-md p-1 xs:p-1.5 sm:p-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <Eye className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 text-gray-700 dark:text-gray-300" />
-                      </button>
+                      <Link href={`/store/product/${product.id}`}>
+                        <button className="flex-shrink-0 border rounded-md p-1 xs:p-1.5 sm:p-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                          <Eye className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 text-gray-700 dark:text-gray-300" />
+                        </button>
+                      </Link>
                     </div>
                   </div>
-                </div>
-
-                {/* Office 2021 Pro Plus */}
-                <div className={`group relative rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${
-                  theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                }`}>
-                  <div className="relative h-32 xs:h-36 sm:h-48 overflow-hidden bg-gray-100 dark:bg-gray-900">
-                    <div className="absolute top-1 left-1 xs:top-2 xs:left-2 sm:top-3 sm:left-3 z-10">
-                      <div className="bg-orange-600 text-white text-[10px] xs:text-xs px-1.5 xs:px-2 py-0.5 xs:py-1 rounded-full font-medium tracking-wide">İndirimde</div>
-                    </div>
-                    <div className="absolute top-1 right-1 xs:top-2 xs:right-2 sm:top-3 sm:right-3 z-10">
-                      <button className="h-6 w-6 xs:h-7 xs:w-7 sm:h-8 sm:w-8 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 flex items-center justify-center">
-                        <Heart className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 text-gray-400 hover:text-red-500" />
-                      </button>
-                    </div>
-                    <Image
-                      src="/images/products/office2021.webp"
-                      alt="Office 2021 Pro Plus"
-                      className="object-contain w-full h-full p-4 transition-transform duration-300 group-hover:scale-105"
-                      width={300}
-                      height={300}
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/product-placeholder.png";
-                      }}
-                    />
-                  </div>
-                  <div className="p-2 xs:p-3 sm:p-5">
-                    <div className="mb-1 xs:mb-2 flex justify-between items-start">
-                      <div>
-                        <span className="text-[10px] xs:text-xs font-medium text-orange-600 dark:text-orange-400 mb-0.5 block">Microsoft</span>
-                        <h3 className="font-medium text-xs sm:text-sm">Office 2021 Pro Plus</h3>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-[10px] xs:text-xs line-through text-gray-500">₺1899</span>
-                        <span className="text-sm xs:text-base sm:text-lg font-bold text-blue-600 dark:text-blue-400">₺699</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center text-amber-500 mb-1 xs:mb-2">
-                      <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-3.5 sm:w-3.5" fill="none" stroke="currentColor" />
-                      <span className="text-[10px] xs:text-xs text-gray-500 dark:text-gray-400 ml-1">(89)</span>
-                    </div>
-                    <p className="text-[10px] xs:text-xs text-gray-600 dark:text-gray-400 mb-2 xs:mb-3 sm:mb-4 line-clamp-2">
-                      Word, Excel, PowerPoint ve daha fazlası. Kalıcı lisans, tek seferlik ödeme.
-                    </p>
-                    <div className="flex space-x-1 xs:space-x-2">
-                      <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 xs:py-1.5 sm:py-2 px-2 xs:px-3 sm:px-4 rounded-md flex items-center justify-center transition-colors text-[10px] xs:text-xs sm:text-sm">
-                        <ShoppingCart className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 mr-1 xs:mr-1.5 sm:mr-2" />
-                        Sepete Ekle
-                      </button>
-                      <button className="flex-shrink-0 border rounded-md p-1 xs:p-1.5 sm:p-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <Eye className="h-3 w-3 xs:h-3.5 xs:w-3.5 sm:h-4 sm:w-4 text-gray-700 dark:text-gray-300" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Windows 10 Pro */}
-                <div className={`group relative rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${
-                  theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                }`}>
-                  <div className="relative h-40 sm:h-48 overflow-hidden bg-gray-100 dark:bg-gray-900">
-                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10">
-                      <button className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 flex items-center justify-center">
-                        <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 hover:text-red-500" />
-                      </button>
-                    </div>
-                    <Image
-                      src="/images/products/windows10.webp"
-                      alt="Windows 10 Pro"
-                      className="object-contain w-full h-full p-4 transition-transform duration-300 group-hover:scale-105"
-                      width={300}
-                      height={300}
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/product-placeholder.png";
-                      }}
-                    />
-                  </div>
-                  <div className="p-3 sm:p-5">
-                    <div className="mb-2 flex justify-between items-start">
-                      <div>
-                        <span className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1 block">Microsoft</span>
-                        <h3 className="font-medium text-sm">Windows 10 Pro</h3>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-xs line-through text-gray-500">₺999</span>
-                        <span className="text-base sm:text-lg font-bold text-blue-600 dark:text-blue-400">₺399</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center text-amber-500 mb-2">
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(215)</span>
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 sm:mb-4 line-clamp-2">
-                      Ömür boyu lisans, dijital teslimat. Windows 11'e ücretsiz yükseltme.
-                    </p>
-                    <div className="flex space-x-2">
-                      <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 sm:py-2 px-3 sm:px-4 rounded-md flex items-center justify-center transition-colors text-xs sm:text-sm">
-                        <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                        Sepete Ekle
-                      </button>
-                      <button className="flex-shrink-0 border rounded-md p-1.5 sm:p-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-700 dark:text-gray-300" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Office 365 */}
-                <div className={`group relative rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ${
-                  theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                }`}>
-                  <div className="relative h-40 sm:h-48 overflow-hidden bg-gray-100 dark:bg-gray-900">
-                    <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10">
-                      <div className="bg-green-600 text-white text-xs px-2 py-1 rounded-full font-medium tracking-wide">Abonelik</div>
-                    </div>
-                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10">
-                      <button className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 flex items-center justify-center">
-                        <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400 hover:text-red-500" />
-                      </button>
-                    </div>
-                    <Image
-                      src="/images/products/office365.webp"
-                      alt="Microsoft 365"
-                      className="object-contain w-full h-full p-4 transition-transform duration-300 group-hover:scale-105"
-                      width={300}
-                      height={300}
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/product-placeholder.png";
-                      }}
-                    />
-                  </div>
-                  <div className="p-3 sm:p-5">
-                    <div className="mb-2 flex justify-between items-start">
-                      <div>
-                        <span className="text-xs font-medium text-green-600 dark:text-green-400 mb-1 block">Microsoft</span>
-                        <h3 className="font-medium text-sm">Microsoft 365</h3>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-xs text-gray-500">6 Kişi / 1 Yıl</span>
-                        <span className="text-base sm:text-lg font-bold text-blue-600 dark:text-blue-400">₺799</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center text-amber-500 mb-2">
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-current" />
-                      <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(65)</span>
-                    </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 sm:mb-4 line-clamp-2">
-                      Tüm Office uygulamaları ve 1TB OneDrive depolama alanı, 6 kullanıcı.
-                    </p>
-                    <div className="flex space-x-2">
-                      <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 sm:py-2 px-3 sm:px-4 rounded-md flex items-center justify-center transition-colors text-xs sm:text-sm">
-                        <ShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
-                        Sepete Ekle
-                      </button>
-                      <button className="flex-shrink-0 border rounded-md p-1.5 sm:p-2 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-700 dark:text-gray-300" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
               </div>
+                  ))
+                ) : (
+                  <div className={`text-center py-16 px-6 rounded-xl col-span-full ${theme === 'dark' ? 'bg-gray-800' : 'bg-white/60'} shadow-md`}>
+                    <div className="bg-gray-100 dark:bg-gray-700 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+                      <Package className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2">Henüz öne çıkan ürün bulunmamaktadır</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm max-w-md mx-auto">
+                      Öne çıkan ürünlerimiz yakında eklenecektir. Lütfen daha sonra tekrar kontrol ediniz.
+                    </p>
+                    </div>
+                )}
+                </div>
 
-              {products.length === 0 && !loading && (
+              {featuredProducts.length === 0 && !loading && (
                 <div className={`text-center py-16 px-6 rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white/60'} shadow-md`}>
                   <div className="bg-gray-100 dark:bg-gray-700 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
                     <Package className="h-8 w-8 text-gray-500 dark:text-gray-400" />
@@ -1032,6 +951,30 @@ export default function StorePage() {
         @keyframes grid-movement {
           0% { background-position: 0% 0%; }
           100% { background-position: 100% 100%; }
+        }
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes fade-out {
+          from {
+            opacity: 1;
+          }
+          to {
+            opacity: 0;
+          }
+        }
+        .animate-fade-in-up {
+          animation: fade-in-up 0.3s ease-out forwards;
+        }
+        .animate-fade-out {
+          animation: fade-out 0.3s ease-in forwards;
         }
         .animate-float-slow {
           animation: float-slow 8s ease-in-out infinite;
