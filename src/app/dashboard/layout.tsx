@@ -1,5 +1,12 @@
+import { Metadata } from 'next';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { getPageMetadata } from '@/app/components/MetadataProvider';
+
+// Dashboard için metadata üreteci
+export async function generateMetadata(): Promise<Metadata> {
+  return getPageMetadata('/dashboard');
+}
 
 export default function DashboardLayout({
   children,

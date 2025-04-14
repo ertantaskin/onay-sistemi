@@ -1,12 +1,15 @@
-'use client';
-
+import { Metadata } from 'next';
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "./ThemeContext";
-import { SessionProvider } from "next-auth/react";
-import { SessionTimeout } from '@/components/SessionTimeout';
+import ClientLayout from '@/app/ClientLayout';
+import { getPageMetadata } from './components/MetadataProvider';
 
 const inter = Inter({ subsets: ["latin"] });
+
+// Ana sayfa için metadata oluşturucu - "/" yolunu kullanır
+export async function generateMetadata(): Promise<Metadata> {
+  return getPageMetadata('/');
+}
 
 export default function RootLayout({
   children,
@@ -16,12 +19,9 @@ export default function RootLayout({
   return (
     <html lang="tr" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
-        <SessionProvider refetchInterval={0} refetchOnWindowFocus={false}>
-          <ThemeProvider>
-            <SessionTimeout />
-            {children}
-          </ThemeProvider>
-        </SessionProvider>
+        <ClientLayout>
+          {children}
+        </ClientLayout>
       </body>
     </html>
   );

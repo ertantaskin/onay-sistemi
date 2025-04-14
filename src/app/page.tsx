@@ -9,7 +9,6 @@ import { Toaster } from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
 import Link from 'next/link';
-import { usePageContent } from '@/hooks/usePageContent';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -17,8 +16,7 @@ import 'swiper/css/navigation';
 
 export default function Home() {
   const { theme } = useTheme();
-  const { pageContent, isLoading: pageLoading } = usePageContent("home");
-
+  
   const slides = [
     {
       title: 'Hızlı ve Güvenli Onay',
@@ -37,54 +35,42 @@ export default function Home() {
     }
   ];
 
-  // Sayfa başlığı ve açıklaması için varsayılan değerler
-  const pageTitle = pageContent?.metaTitle || "Microsoft Onay Sistemi";
-  const pageDescription = pageContent?.metaDesc || "Microsoft ürünleriniz için hızlı ve güvenli onay alın. 7/24 destek ve uygun fiyatlar.";
-
-  // useEffect ile meta etiketlerini güncelleyelim
-  useEffect(() => {
-    // Sayfa başlığını güncelle
-    document.title = pageTitle;
-    
-    // Meta açıklamasını güncelle
-    const updateMetaTag = (name: string, content: string) => {
-      let metaTag = document.querySelector(`meta[name="${name}"]`);
-      if (!metaTag) {
-        metaTag = document.createElement('meta');
-        metaTag.setAttribute('name', name);
-        document.head.appendChild(metaTag);
-      }
-      metaTag.setAttribute('content', content);
-    };
-
-    const updateOgMetaTag = (property: string, content: string) => {
-      let metaTag = document.querySelector(`meta[property="${property}"]`);
-      if (!metaTag) {
-        metaTag = document.createElement('meta');
-        metaTag.setAttribute('property', property);
-        document.head.appendChild(metaTag);
-      }
-      metaTag.setAttribute('content', content);
-    };
-
-    // Meta etiketlerini güncelle
-    updateMetaTag('description', pageDescription);
-    updateOgMetaTag('og:title', pageTitle);
-    updateOgMetaTag('og:description', pageDescription);
-    updateOgMetaTag('og:type', 'website');
-    updateMetaTag('twitter:card', 'summary_large_image');
-    updateMetaTag('twitter:title', pageTitle);
-    updateMetaTag('twitter:description', pageDescription);
-    
-    // Temizleme fonksiyonu
-    return () => {
-      document.title = "Microsoft Onay Sistemi";
-    };
-  }, [pageTitle, pageDescription]);
-
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       <Header />
+
+      {/* Hero Section */}
+      <div className="text-center my-8">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+          Microsoft Onay Sistemi
+        </h1>
+        <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
+          Microsoft ürünleriniz için hızlı, güvenilir ve uygun fiyatlı aktivasyon çözümleri
+        </p>
+        
+        {/* Yeni SEO Bilgi Kutusu */}
+        <div className="max-w-3xl mx-auto mt-12 mb-16 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 text-left">
+          <h2 className="text-xl font-semibold mb-4">SEO Sistemi Nasıl Çalışır?</h2>
+          <p className="mb-3">
+            Bu site, admin panelinden ayarlanabilen dinamik SEO meta etiketleri sistemine sahiptir.
+            Her sayfa, veritabanındaki ayarlara göre otomatik olarak meta etiketleri alır.
+          </p>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+              <h3 className="text-lg font-medium mb-2">Admin Paneli Ayarları</h3>
+              <p className="text-sm">Admin panelindeki SEO Ayarları bölümünden her sayfa için meta etiketleri tanımlayabilirsiniz.</p>
+            </div>
+            <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+              <h3 className="text-lg font-medium mb-2">Test Sayfaları</h3>
+              <p className="text-sm">
+                <a href="/test-metadata" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">Test Metadata</a> ve 
+                <a href="/ornek" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 ml-1">Örnek Sayfa</a> 
+                üzerinden SEO ayarlarını test edebilirsiniz.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Hero Section with Slider */}
       <section className="pt-16 relative overflow-hidden">

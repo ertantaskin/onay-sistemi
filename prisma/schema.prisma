@@ -305,14 +305,19 @@ model GuestCartItem {
   @@index([productId])
 }
 
-model PageContent {
+model SeoSettings {
   id          String   @id @default(cuid())
-  pageKey     String   @unique
+  pageUrl     String   @unique
+  pageType    String   @default("page") // page, product, category, etc.
   title       String
   description String
-  metaTitle   String?
-  metaDesc    String?
-  content     Json     @default("{}")
+  keywords    String?
+  ogTitle     String?
+  ogDesc      String?
+  ogImage     String?
+  canonical   String?
+  robots      String?  @default("index, follow")
+  schema      Json?    @default("{}")
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

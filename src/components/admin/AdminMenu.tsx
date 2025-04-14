@@ -117,7 +117,7 @@ export default function AdminMenu() {
       icon: HiOutlineCog,
       items: [
         { href: '/admin/settings', label: 'Sistem Ayarları' },
-        { href: '/admin/page-content', label: 'Sayfa İçerikleri' }
+        { href: '/admin/seo-settings', label: 'SEO Ayarları' }
       ]
     }
   ];

@@ -1,54 +1,69 @@
 import { Metadata } from 'next';
-import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
 import { cache } from 'react';
+
+// Server-side only
+const prisma = new PrismaClient();
 
 // SEO verilerini önbelleğe alan fonksiyon
 const getSeoData = cache(async (pathname: string) => {
   console.log(`[MetadataProvider] 🔍 ${pathname} için veritabanında SEO verisi aranıyor...`);
   
   try {
-    // @ts-ignore - Prisma client'ın SeoSettings modelini tanımaması sorunu
-    const seoData = await prisma.seoSettings.findUnique({
-      where: { 
-        pageUrl: pathname,
-        isActive: true
-      }
-    });
-    
-    if (seoData) {
-      console.log(`[MetadataProvider] ✅ ${pathname} için SEO verisi bulundu (${seoData.id})`);
-    } else {
-      console.log(`[MetadataProvider] ⚠️ ${pathname} için SEO verisi bulunamadı`);
-      
-      // Ürün veya kategori olabileceğini kontrol et
-      if (pathname.includes('/store/category/') || pathname.includes('/store/categories/')) {
-        const slug = pathname.split('/').pop();
-        console.log(`[MetadataProvider] 🔄 Kategori slug'ı algılandı: ${slug}`);
-        
-        try {
-          // @ts-ignore - Prisma client kategori modelini tanımıyor
-          const category = await prisma.productCategory.findFirst({
-            where: { 
-              OR: [
-                { slug: slug },
-                { id: slug }
-              ]
-            }
-          });
-          
-          if (category) {
-            console.log(`[MetadataProvider] 🏷️ Kategori veritabanında bulundu: ${category.name}`);
-          }
-        } catch (error) {
-          console.error(`[MetadataProvider] ❌ Kategori veritabanı sorgusu hatası:`, error);
-        }
-      } else if (pathname.includes('/store/product/')) {
-        const productSlug = pathname.split('/').pop();
-        console.log(`[MetadataProvider] 🔄 Ürün slug'ı algılandı: ${productSlug}`);
-      }
+    // Prisma bağlantısını kontrol et
+    if (!prisma) {
+      console.error(`[MetadataProvider] ❌ Prisma bağlantısı başlatılamadı`);
+      return null;
     }
     
-    return seoData;
+    try {
+      // TypeScript tanımlaması için @ts-ignore kullanmak yerine 
+      // "as any" ile geçici tür dönüşümü yapıyoruz
+      const seoData = await (prisma as any).seoSettings.findUnique({
+        where: { 
+          pageUrl: pathname,
+          isActive: true
+        }
+      });
+      
+      if (seoData) {
+        console.log(`[MetadataProvider] ✅ ${pathname} için SEO verisi bulundu (${seoData.id})`);
+      } else {
+        console.log(`[MetadataProvider] ⚠️ ${pathname} için SEO verisi bulunamadı`);
+        
+        // Ürün veya kategori olabileceğini kontrol et
+        if (pathname.includes('/store/category/') || pathname.includes('/store/categories/')) {
+          const slug = pathname.split('/').pop();
+          console.log(`[MetadataProvider] 🔄 Kategori slug'ı algılandı: ${slug}`);
+          
+          try {
+            // @ts-ignore - Prisma client kategori modelini tanımıyor
+            const category = await prisma.productCategory.findFirst({
+              where: { 
+                OR: [
+                  { slug: slug },
+                  { id: slug }
+                ]
+              }
+            });
+            
+            if (category) {
+              console.log(`[MetadataProvider] 🏷️ Kategori veritabanında bulundu: ${category.name}`);
+            }
+          } catch (error) {
+            console.error(`[MetadataProvider] ❌ Kategori veritabanı sorgusu hatası:`, error);
+          }
+        } else if (pathname.includes('/store/product/')) {
+          const productSlug = pathname.split('/').pop();
+          console.log(`[MetadataProvider] 🔄 Ürün slug'ı algılandı: ${productSlug}`);
+        }
+      }
+      
+      return seoData;
+    } catch (error) {
+      console.error(`[MetadataProvider] ❌ Veritabanı hatası: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
+    }
   } catch (error) {
     console.error(`[MetadataProvider] ❌ Veritabanı hatası: ${error instanceof Error ? error.message : String(error)}`);
     return null;
@@ -127,6 +142,8 @@ export async function getPageMetadata(pathname: string): Promise<Metadata> {
     }
   } catch (error) {
     console.error(`[MetadataProvider] ❌ Metadata alınırken hata: ${error instanceof Error ? error.message : String(error)}`);
+    console.log(`[MetadataProvider] 🔄 Varsayılan metadataya dönülüyor...`);
+    // Hata durumunda akışa devam et ve varsayılan metadata döndür
   }
   
   // Varsayılan değerler

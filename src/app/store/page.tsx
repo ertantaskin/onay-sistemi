@@ -8,13 +8,13 @@ import { useTheme } from "../ThemeContext";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
-import { usePageContent } from "@/hooks/usePageContent";
 import { useCartStore } from '@/store/cartStore';
 
 interface ProductCategory {
   id: string;
   name: string;
   description: string | null;
+  slug?: string;
 }
 
 export default function StorePage() {
@@ -22,7 +22,6 @@ export default function StorePage() {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { theme } = useTheme();
-  const { pageContent, isLoading: pageLoading } = usePageContent("store");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const { updateCartItemCount } = useCartStore();
@@ -63,51 +62,6 @@ export default function StorePage() {
     fetchCategories();
     fetchFeaturedProducts();
   }, []);
-
-  // Sayfa başlığı ve açıklaması için varsayılan değerler
-  const pageTitle = pageContent?.metaTitle || "Microsoft Lisans Mağazası";
-  const pageDescription = pageContent?.metaDesc || "Orijinal Microsoft lisanslarını uygun fiyatlarla satın alın. Windows, Office ve daha fazlası.";
-  
-  useEffect(() => {
-    document.title = pageTitle;
-    
-    const updateMetaTag = (name: string, content: string) => {
-      let metaTag = document.querySelector(`meta[name="${name}"]`);
-      if (!metaTag) {
-        metaTag = document.createElement('meta');
-        metaTag.setAttribute('name', name);
-        document.head.appendChild(metaTag);
-      }
-      metaTag.setAttribute('content', content);
-    };
-
-    const updateOgMetaTag = (property: string, content: string) => {
-      let metaTag = document.querySelector(`meta[property="${property}"]`);
-      if (!metaTag) {
-        metaTag = document.createElement('meta');
-        metaTag.setAttribute('property', property);
-        document.head.appendChild(metaTag);
-      }
-      metaTag.setAttribute('content', content);
-    };
-
-    updateMetaTag('description', pageDescription);
-    updateOgMetaTag('og:title', pageTitle);
-    updateOgMetaTag('og:description', pageDescription);
-    updateOgMetaTag('og:type', 'website');
-    updateMetaTag('twitter:card', 'summary_large_image');
-    updateMetaTag('twitter:title', pageTitle);
-    updateMetaTag('twitter:description', pageDescription);
-
-    return () => {
-      document.title = "";
-    };
-  }, [pageTitle, pageDescription, pageContent]);
-
-  // Sayfa içeriği
-  const products = pageContent?.content?.products || [];
-  // Sayfa kategorileri için API'den gelen veriyi kullanıyoruz
-  const categoriesFromApi = categories;
 
   const handleAddToCart = async (productId: string) => {
     setAddingToCart(productId);
@@ -485,7 +439,7 @@ export default function StorePage() {
                   const categorySlug = category.id; 
 
                   return (
-                    <Link href={`/store/category/${categorySlug}`} className="group" key={category.id}>
+                    <Link href={`/kategori/${category.slug || category.id}`} className="group" key={category.id}>
                 <div className={`h-full rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${
                   theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white'
                 }`}>
